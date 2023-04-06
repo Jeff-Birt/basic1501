@@ -1,0 +1,31 @@
+0       1    2   3   4     5   6   7   8   9  10  11  12  13   14   15   16   17   18   19   20   21   22   23   24   25   26
+0x01   "@"  "C" "O" "M"   "B" "A" "S" "I" "C" "1" "5" "0" "1" 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x38 0x00 0x09 0x84 0x?? 0x??
+
+01      40   43  4F  4D    42  41  53  49  43  31  35  30  31  00   00   00   00   00   00   00   38   00   09   84   00   00
+
+Bytes
+0		0x01 			Begin marker
+1-4		"@COM" 		CE-158 type
+5-20		"Filename" 		Padded with zeros
+21-22		Start Address	HB LB
+23-24		Length		HB LB, length code excludes length of header
+25-26					Don't care
+
+CE-158 Header is 27 bytes long, 0x00-0x1A
+
+Start of RAM with CE-155 is 3800: 10 01 40 96 60 00 01 00 
+
+
+To Load Binary as ASCII over RS-232
+SETCOM 2400,8,N,1	Set baud and parameters (if not already done)
+OUTSTAT 0		Set handshaking lines on (if not already done)
+SETDEV CI		Redirect cassette input to RS-232
+CLOADm		Load ML
+
+To Save Binary over RS-232
+SETCOM 2400,8,N,1	Set baud and parameters (if not already done)
+OUTSTAT 0		Set handshaking lines on (if not already done)
+SETDEV CO		Redirect cassette out to RS-232
+CSAVEM “name”;&0000,&3FFF		Save BASIC
+
+PRINT PEEK &E2B9 will be 56d if new ROM

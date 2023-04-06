@@ -1,0 +1,78 @@
+; BASIC1501 Load address $3808, end address $4183, length $097B
+#include "PC-1500.lib"
+#include "CE-151.lib"
+
+;Labels
+START			=	$3808	; test comment
+DELETE			=	$38C5
+DISP			=	$3930
+RENUM           =   $396E
+SET             =   $39AF
+RESET           =	$39CD
+ASK             =	$39F0
+INSTR           =	$3A22
+BEGIN           =	$3A84
+STACK           =	$3A9A
+UNTIL           =	$3AA0
+BU_STACK		=	$3ACE
+CAPs			=	$3AE6
+IFn				=	$3B06
+ELSEn           =	$3B16
+ENDIFn          =	$3B20
+TEST			 =	$3B21
+TRUE			=	$3B2A
+FALSE           =	$3B36
+ERN				=	$3B56
+ERL				=	$3B5C
+LOW				=	$3B67
+MOKE			=	$3B74
+HEXs			=	$3BCE
+DUMPs			=	$3BE8
+HVAL			=	$3C10
+STRINGs			=	$3C22
+RESUME			=	$3C64
+INV				=	$3C73
+PAGE			=	$3C84
+NUMTBL			=	$3D56
+MOVE			=	$3DBA
+REMOVE			=	$3DC0
+BAS1501_TABLE 	= 	$4000
+TOKEN_TABLE	    =	$3854
+
+;SEGMENT types
+.RESERVE	$3808
+.CODE		$38C5
+.CODE		$3930
+.CODE		$396E
+.CODE		$39AF
+.CODE		$39CD
+.CODE		$39F0
+.CODE		$3A22
+.CODE		$3A84
+.CODE		$3A9A
+.CODE		$3AA0
+.BYTE		$3ACE
+.CODE		$3AE6
+.CODE		$3B06
+.CODE		$3B16
+.CODE		$3B20
+.CODE		$3B21
+.CODE		$3B2A
+.CODE		$3B36
+.CODE		$3B56
+.CODE		$3B5C
+.CODE		$3B67
+.CODE		$3B74
+.CODE		$3BCE
+.CODE		$3BE8
+.CODE		$3C10
+.CODE		$3C22
+.CODE		$3C64
+.CODE		$3C73
+.CODE		$3C84
+.RESERVE	$3C99
+.CODE		$3D56
+.CODE		$3DBA
+.CODE		$3DC0
+.BASTBL		$4000
+.BYTE		$4054

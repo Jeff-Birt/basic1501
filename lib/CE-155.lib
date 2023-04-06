@@ -1,0 +1,4 @@
+ ; CE-155 library file
+RAM_ST            = $2000 ; Start of RAM w/CE-155, 8K RAM module
+RESMEM_ST         = $2008 ; Reserve memroy area w/CE-155 (2008-20C4)
+PRGMEM_ST         = $20C5 ; Start of program memory w/CE-155

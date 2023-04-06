@@ -1,0 +1,2376 @@
+0001   0000             ;------------------------------------------------------------------------------
+0002   0000             ; BASIC1501 from SHARPENTIERS_06 pg. 10
+0003   0000             ; Adds 32 BASIC commands
+0004   0000             ;------------------------------------------------------------------------------
+0005   0000             #INCLUDE    "lib/PC-1500.lib"
+0001+  0000              ; PC-1500 library file
+0002+  0000             ;RAM_ST            = $4000 ; Start of RAM w/o RAM expansion
+0003+  0000             ;RESMEM_ST         = $4008 ; Reserve memroy area area w/o RAM expansion (4008-40C4)
+0004+  0000             ;PRGMEM_ST         = $40C5 ; Start of program memory w/o RAM expansion
+0005+  0000             SHADOW_RAM        = $7000 ; Shadow of RAM from (4000-45FF?)
+0006+  0000             SHADOW_RAM_SIZE   = $0600 ; 
+0007+  0000             DISP_BUFF         = $7600 ; Display Buffer (7600-774F)
+0008+  0000             DISP_BUFF_SIZE    = $0150 ; 
+0009+  0000             STRING_VARS       = $7650 ; Fixed String variables (7650-77AF)
+0010+  0000             STRING_VARS_SIZE  = $01AF ; 
+0011+  0000             CPU_STACK         = $7800 ; CPU stack (7800-784F)
+0012+  0000             CPU_STACK_SIZE    = $50   ; 
+0013+  0000             KATAFLAGS         = $785D ; Katakana displayed flags
+0014+  0000             KATACHAR          = $785E ; Address of Katakana character codes (H)
+0015+  0000             ROM_ST_H          = $7861 ; Start of Basic program in ROM module (H)
+0016+  0000             ROM_ST_L          = $7862 ; Start of Basic program in ROM module (L)
+0017+  0000             RAM_ST_H          = $7863 ; Start of RAM pointer (H)
+0018+  0000             RAM_END_H         = $7864 ; End of RAM pointer (H)
+0019+  0000             BASPRG_ST_H       = $7865 ; Start of Basic program in RAM (H)
+0020+  0000             BASPRG_ST_L       = $7866 ; Start of Basic program in RAM (L)
+0021+  0000             BASPRG_END_H      = $7867 ; End of Basic program in RAM (H)
+0022+  0000             BASPRG_END_L      = $7868 ; End of Basic program in RAM (L)
+0023+  0000             BASPRG_EDT_H      = $7869 ; Start of Basic program edit (H)
+0024+  0000             BASPRG_EDT_L      = $786A ; Start of Basic program edit (L)
+0025+  0000             BEEP_PTR          = $786B ; BEEP and RMT flags
+0026+  0000             RCLTEMPBUFF       = $786C ; RCL Temp buffer (786C-7870)
+0027+  0000             RCLTEMPBUFF_SIZE  = $05   ; 
+0028+  0000             WAIT_CFG          = $7871 ; WAIT setting
+0029+  0000             WAIT_CTR_H        = $7872 ; WAIT time counter (H)
+0030+  0000             WAIT_CTR_L        = $7873 ; WAIT time counter (L)
+0031+  0000             CURSOR_ENA        = $7874 ; Flags: 01=Cursor enabled, 80=display currently saved 7B10-7BAB
+0032+  0000             CURSOR_PTR        = $7875 ; CURSOR POINTER (current display column number)
+0033+  0000             CHARPOS_LCD       = $7876 ; Character position number in display, with INPUT statement
+0034+  0000             BEEP_FREQ         = $7878 ; BEEP frequency
+0035+  0000             CASS_FLAG         = $7879 ; Cassette Operation Parameter (tape interface flag)
+0036+  0000             CURSOR_BLNK       = $787C ; Flags: 01=blink cursor enabled, 80=a character is now blinked
+0037+  0000             BLNKD_CHAR_CODE   = $787D ; Code of character blinked
+0038+  0000             CURS_POS_NBUF_H   = $787E ; Position of blink cursor in buffer (H)
+0039+  0000             CURS_POS_NBUF_L   = $787F ; Position of blink cursor in buffer (L)
+0040+  0000             DISPARAM          = $7880 ; Display Parameter: determines display at READY
+0041+  0000             STK_PTR_GSB_FOR   = $7882 ; Stack pointer for GOSUB and FOR
+0042+  0000             CURVARADD_H       = $7883 ; Current variable address (H)
+0043+  0000             CURVARADD_L       = $7884 ; Current variable address (L)
+0044+  0000             LASTVARADD_H      = $7886 ; Last variable address (H)
+0045+  0000             LASTVARADD_L      = $7887 ; Last variable address (L)
+0046+  0000             LASTVARTYPE       = $7888 ; Last variable type
+0047+  0000             BREAKPARAM        = $788A ; BREAK flag parameter
+0048+  0000             INBUFPTR_L        = $788B ; Input Buffer pointer (L)
+0049+  0000             NUMARGS           = $788C ; Number of function input arguments, array dim 1/2
+0050+  0000             TRACE_ON          = $788D ; TRACE ON/OFF pointer: 00=OFF, >0=ON 
+0051+  0000             TRACE             = $788E ; TRACE Parameter
+0052+  0000             FORNXT_STK_PTR    = $7890 ; FOR/NEXT stack pointer (L)
+0053+  0000             GOSB_STK_PTR_L    = $7891 ; GOSUB stack pointer (L)
+0054+  0000             BAS_DATA_STK_L    = $7892 ; BASIC DATA STACK pointer (L)
+0055+  0000             BAS_PENOP_STK_L   = $7893 ; BASIC PENDING OP STACK pointer (L)
+0056+  0000             STR_BUF_PTR_L     = $7894 ; String Buffer Pointer (L)
+0057+  0000             USINGF            = $7895 ; USING F/F (format, decimal, comma, etc.)
+0058+  0000             USINGM            = $7896 ; USING M integer part
+0059+  0000             USING_CHR         = $7897 ; USING & character string
+0060+  0000             USINGMD           = $7898 ; USING m decimal part
+0061+  0000             VAR_START_H       = $7899 ; START OF VARIABLES in main memory (H)
+0062+  0000             VAR_START_L       = $789A ; START OF VARIABLES in main memory (L)
+0063+  0000             ERL               = $789B ; ERL, Error code
+0064+  0000             CURR_LINE_H       = $789C ; Current line number (H)
+0065+  0000             CURR_LINE_L       = $789D ; Current line number (L)
+0066+  0000             CURR_TOP_H        = $789E ; Beginning address of current program (H)
+0067+  0000             CURR_TOP_L        = $789F ; Beginning address of current program (L)
+0068+  0000             PREV_ADD_H        = $78A0 ; Previous address (of preceeding line) (H)
+0069+  0000             PREV_ADD_L        = $78A1 ; Previous address (of preceeding line) (L)
+0070+  0000             PREV_LINE_H       = $78A2 ; Previous line number (H)
+0071+  0000             PREV_LINE_L       = $78A3 ; Previous line number (L)
+0072+  0000             PREV_TOP_H        = $78A4 ; Begginning of program containing previous line (H)
+0073+  0000             PREV_TOP_L        = $78A5 ; Begginning of program containing previous line (L)
+0074+  0000             SRCH_ADD_H        = $78A6 ; Address of linefound during search (H)
+0075+  0000             SRCH_ADD_L        = $78A7 ; Address of linefound during search (L)
+0076+  0000             SRCH_LINE_H       = $78A8 ; Line number found after search (H)
+0077+  0000             SRCH_LINE_L       = $78A9 ; Line number found after search (L)
+0078+  0000             SRCH_TOP_H        = $78AA ; Beginning of program containing SEARCH line (H)
+0079+  0000             SRCH_TOP_L        = $78AB ; Beginning of program containing SEARCH line (L)
+0080+  0000             BRK_ADD_H         = $78AC ; Break address (H)
+0081+  0000             BRK_ADD_L         = $78AD ; Break address (L)
+0082+  0000             BRK_LINE_H        = $78AE ; Break line number (H)
+0083+  0000             BRK_LINE_L        = $78AF ; Break line number (L)
+0084+  0000             BRK_TOP_H         = $78B0 ; Beginning of program containing BREAK line
+0085+  0000             BRK_TOP_L         = $78B1 ; Beginning of program containing BREAK line
+0086+  0000             ERR_ADD_H         = $78B2 ; Error address (H)
+0087+  0000             ERR_ADD_L         = $78B3 ; Error address (L)
+0088+  0000             ERR_LINE_H        = $78B4 ; Error line number (H)
+0089+  0000             ERR_LINE_L        = $78B5 ; Error line number (L)
+0090+  0000             ERR_TOP_H         = $78B6 ; Beginning address of program containing ERROR line (H)
+0091+  0000             ERR_TOP_L         = $78B7 ; Beginning address of program containing ERROR line (L)
+0092+  0000             ON_ERR_ADD_H      = $78B8 ; Address jumped to when error occures (H)
+0093+  0000             ON_ERR_ADD_L      = $78B9 ; Address jumped to when error occures (L)
+0094+  0000             ON_ERR_LINE_H     = $78BA ; Line number jumped to when error occures (H)
+0095+  0000             ON_ERR_LINE_L     = $78BB ; Line number jumped to when error occures (L)
+0096+  0000             ON_ERR_TOP_H      = $78BC ; Beginning of program containing ON ERROR line (H)
+0097+  0000             ON_ERR_TOP_L      = $78BD ; Beginning of program containing ON ERROR line (L)
+0098+  0000             DATA_PTR_H        = $78BE ; Pointer for data statement (H)
+0099+  0000             DATA_PTR_L        = $78BF ; Pointer for data statement (H)
+0100+  0000             FIXED_VARS        = $78C0 ; Fixed Variables (78C0-79CF)
+0101+  0000             FIXED_VARS_SIZE   = $0110 ; 
+0102+  0000             PU_PV             = $79D0 ; PU/PV flag, ROM Bank: 00=ROM 1, 01=ROM 2
+0103+  0000             OPN               = $79D1 ; OPN device code: 60=LCD, 5C=CMT, 58=MGP. C4=LPRT, C0=COM
+0104+  0000             UNDEF_REG_79FF    = $79FF ; LOCK mode: 00=LOCK, FF=UNLOCK
+0105+  0000             ARX               = $7A00 ; Floating-Point accumulator
+0106+  0000             ARX_SIZE          = $08   ; 
+0107+  0000             ARZ               = $7A08 ; Scratch register (7A00-7A07)
+0108+  0000             ARZ_SIZE          = $08   ; 
+0109+  0000             ARY               = $7A10 ; Second operand (7A10-7A17)
+0110+  0000             ARY_SIZE          = $08   ; 
+0111+  0000             ARU               = $7A18 ; Scratch register (7A18-7A1F)
+0112+  0000             ARU_SIZE          = $08   ; 
+0113+  0000             ARV               = $7A20 ; Scratch register (7A2-7A27)
+0114+  0000             ARV_SIZE          = $08   ; 
+0115+  0000             ARW               = $7A28 ; Scratch register (7A28-7A2F)
+0116+  0000             ARW_SIZE          = $08   ; 
+0117+  0000             ARS               = $7A30 ; Temporary storage register (7A30-7A37)
+0118+  0000             ARS_SIZE          = $08   ; 
+0119+  0000             B_STACK           = $7A38 ; Basic Stack (7838-7AFF)
+0120+  0000             B_STACK_SIZE      = $C8   ; 
+0121+  0000             RND_VAL           = $7B00 ; Contain Random number value (7B00-7B07)
+0122+  0000             RND_VAL_SIZE      =       ; S
+0123+  0000             KEY_REPEAT        = $7B09 ; Key repeat speed
+0124+  0000             APOW_CTR_H        = $7B0A ; Auto power down counter (H)
+0125+  0000             APOW_CTR_M        = $7B0B ; Auto power down counter (M)
+0126+  0000             APOW_CTR_L        = $7B0C ; Auto power down counter (L)
+0127+  0000             CURS_BLNK_CTR     = $7B0D ; Cursor blink counter
+0128+  0000             CURS_CTRL         = $7B0E ; Cursor Control Parameter
+0129+  0000             KEY_LAST          = $7B0F ; Last pressed key code
+0130+  0000             STR_BUF           = $7B10 ; String Buffer (7B10-7B5F)
+0131+  0000             STR_BUF_SIZE      = $50   ; 
+0132+  0000             OUT_BUF           = $7B60 ; Output Buffer (7B60-7BAF)
+0133+  0000             OUT_BUF_SIZE      = $50   ; 
+0134+  0000             IN_BUF            = $7BB0 ; Input Buffer (7BB0-7BFF)
+0135+  0000             IN_BUF_SIZE       = $80   ; 
+0136+  0000             SAVEVARPTR_ARX    = $C00E ; Save variable pointer. Address from U-Reg, length from AR-X (7A07).
+0137+  0000             SAVEVARPTR_A      = $C011 ; Save variable pointer. Address from U-Reg, length from A.
+0138+  0000             SM_NEW0           = $C34F ;  'NEW0?' (C350-C354) (Start of system messages)
+0139+  0000             SM_NEW0_SIZE      = $05   ; 
+0140+  0000             SM_CHECK          = $C355 ;  ':CHECK' (C355-C35B)
+0141+  0000             SM_BREAK          = $C35C ;  'BREAK' (C35C-C361)
+0142+  0000             SM_IN             = $C362 ;  'IN' (C362-C364)
+0143+  0000             SM_IN_SIZE        = $05   ; 
+0144+  0000             SM_ERROR          = $C365 ;  'ERROR' (C365-C36A)
+0145+  0000             SM_ERROR_SIZE     = $05   ; 
+0146+  0000             DEFKEY_TBL        = $C36B ; Occupied DEF key table (C36B-C38A)
+0147+  0000             DEFKEY_TBL_SIZE   = $05   ; 
+0148+  0000             EDCTRL_TBL        = $C38B ; Address table for editor control characters (C38B-C3A9)
+0149+  0000             EDCTRL_TBL_SIZE   = $05   ; 
+0150+  0000             FVAL_TBLE         = $C3A8 ; Operator table for formula eval of subs (C3A8-C3FF)  (DE) (D6DF)
+0151+  0000             FVAL_TBLE_SIZE    = $05   ; 
+0152+  0000             BCMD_LET          = $C458 ; Basic command LET
+0153+  0000             BCMD_STOP         = $C4B6 ; Basic command STOP
+0154+  0000             BCMD_END          = $C50D ; Basic Command END
+0155+  0000             BCMD_GOTO         = $C515 ; Basic Command GOTO
+0156+  0000             DEFKEY_EVAL       = $C529 ; Evaluate def keys
+0157+  0000             BCMD_IF           = $C5B4 ; Basic Command IF
+0158+  0000             BCMD_ON           = $C5E0 ; Basic Command ON
+0159+  0000             BCMD_GOSUB        = $C64E ; Basic Command GOSUB
+0160+  0000             BCMD_REM          = $C676 ; Basic Command REM
+0161+  0000             BCMD_USING        = $C67C ; Basic Command USING
+0162+  0000             BCMD_DATA         = $C684 ; Basic Command DATA / ARUN / AREAD
+0163+  0000             BCMD_TRON         = $C68C ; Basic Command TRON
+0164+  0000             BCMD_TROFF        = $C693 ; Basic Command TROFF
+0165+  0000             BCMD_DEGREE       = $C697 ; Basic Command DEGREE
+0166+  0000             BCMD_RADIAN       = $C6A4 ; Basic Command RADIAN
+0167+  0000             BCMD_GRAD         = $C6A8 ; Basic Command GRAD
+0168+  0000             BCMD_RETURN       = $C6AC ; Basic Command RETURN
+0169+  0000             BCMD_NEXT         = $C704 ; Basic Command NEXT
+0170+  0000             BCMD_FOR          = $C711 ; Basic Command FOR
+0171+  0000             BCMD_POKE         = $C777 ; Basic Command POKE
+0172+  0000             BCMD_POKE#        = $C778 ; Basic Command POKE#
+0173+  0000             BCMD_RESTORE      = $C7A2 ; Basic Command RESTORE
+0174+  0000             BCMD_READ         = $C7BB ; Basic Command READ
+0175+  0000             BCMD_NEW          = $C8A0 ; Basic Command NEW
+0176+  0000             BCMD_CLEAR        = $C8F5 ; Basic Command CLEAR
+0177+  0000             BCMD_CALL         = $CB63 ; Basic Command CALL
+0178+  0000             BCMD_RUN          = $C884 ; Basic Command RUN
+0179+  0000             BCMD_CONT         = $C8C7 ; Basic Command CONT
+0180+  0000             BCMD_INPUT        = $C8FA ; Basic Command INPUT
+0181+  0000             BCMD_LOCK         = $C968 ; Basic Command LOCK
+0182+  0000             BCMD_UNLOCK       = $C96A ; Basic Command UNLOCK
+0183+  0000             BCMD_LIST         = $C96E ; Basic Command LIST
+0184+  0000             BCMD_DIM          = $C988 ; Basic Command DIM
+0185+  0000             COLD_START        = $C9E4 ; Editor Cold Start
+0186+  0000             BTN_SHCL          = $CA55 ; SHIFT CL (Clear All)
+0187+  0000             WARM_START        = $CA58 ; Editor Warm Start
+0188+  0000             BUTTON_CL         = $CA64 ; CL Button (Clear LCD )
+0189+  0000             BTN_RCL           = $CB61 ; RCL Button
+0190+  0000             BTN_SHMODE        = $CB9C ; SHIFT MODE Button (RESERVE mode)
+0191+  0000             BTN_MODE          = $CBA0 ; MODE Button
+0192+  0000             BTN_INS           = $CBC7 ; INS Button
+0193+  0000             BTN_DEL           = $CBCF ; DEL Button
+0194+  0000             BTN_RIGHT         = $CBE4 ; CURSOR RIGHT Button
+0195+  0000             BTN_LRFT          = $CC22 ; CURSOR LEFT Button
+0196+  0000             BTN_UP            = $CC38 ; CURSOR UP Button
+0197+  0000             BTN_DOWN          = $CC48 ; CURSOR DOWN Button
+0198+  0000             BTN_ENTER         = $CCC1 ; ENTER Button
+0199+  0000             UNLOCK            = $CD6A ; UNLOCK
+0200+  0000             BTN_OFF           = $CD71 ; OFF Button
+0201+  0000             RESKEY_SRCH       = $CEC4 ; Searches for reserve key code in Reserve memory
+0202+  0000             TXFR_RSV_KEY      = $CED0 ; Transfers reserve key assignment to Reserve memory.
+0203+  0000             PRGLINE_TDI       = $CF27 ; Transfer, delete, insert program line from Input Buffer
+0204+  0000             INBUF_CLRRST      = $D021 ; Clear rest of the input buffer (0D).
+0205+  0000             INBUF_INIT        = $D030 ; Clear Input Buffer, Y-Reg points to start of Input Buffer
+0206+  0000             INBUF_CLR         = $D034 ; Clears Input buffer with $0D
+0207+  0000             SYSMSG            = $D046 ; Send System Messages.
+0208+  0000             XREG2YREG         = $D049 ; Transfers UL bytes from X-Reg to Y-Reg
+0209+  0000             DEL_DIM_VARS      = $D09C ; Deletes dimensioned variables if program and variable memory overlap C=1
+0210+  0000             BCD_Y2ARX         = $D14F ; Pass BCD number pointed to by Y-Reg to AR-X
+0211+  0000             LINESEARCH        = $D2EA ; Searches for line number according to U-Reg from start of program.
+0212+  0000             SRCHPRGLINE       = $D2EC ; Searches program line in U-REG from X-REG
+0213+  0000             DELU_FROMX        = $D3C4 ; Deletes (U + 1) bytes from X-Reg.
+0214+  0000             DEC2HEX           = $D3D5 ; Convert from decimal to hexadecimal.
+0215+  0000             BCMD_PEEK         = $D993 ; Basic commands PEEK/PEEK#
+0216+  0000             BCMD_NOT          = $D99E ; Basic command NOT
+0217+  0000             BCMD_INKY         = $D9AA ; Basic command INKEY$
+0218+  0000             BCMD_CHR          = $D9B1 ; Basic command CHR$
+0219+  0000             BCMD_STR          = $D9CF ; Basic command STR$
+0220+  0000             BCMD_LEN          = $D9D7 ; Basic command LEN / ASC
+0221+  0000             BCMD_RLM_STR      = $D9F3 ; Basic commands RIGHT$ / LEFT$ / MID$
+0222+  0000             BCMD_STATUS       = $DA44 ; Basic command STATUS
+0223+  0000             BCMD_MEM          = $DA5D ; Basic command MEM
+0224+  0000             EVAL_USING        = $DAB2 ; Evaluation of USING paramters from Y-Reg
+0225+  0000             LOAD_NEXT         = $DCD4 ; Load next Token / character
+0226+  0000             XREG2STRBUF       = $DFA1 ; Inserts string pointed to by X-Reg into string buffer. Jump if overflow.
+0227+  0000             ARX2STRBUF        = $DFC4 ; Loads AR-X with a pointer to the string buffer.
+0228+  0000             U_MINUS_X         = $DFE2 ; U-Reg = U-Reg - X-Reg. If overflow occurs C=0 and UH=16
+0229+  0000             MEM_IN_UREG       = $DFEE ; Calculates the available memory space (MEM) in U-Reg.
+0230+  0000             PRGST2XREG        = $DFF3 ; X-Reg = Program Start Address. U-Reg = STATUS 1-2
+0231+  0000             AUTO_OFF          = $E33F ; Auto-Power-Off routine
+0232+  0000             KEY2ASCII         = $E42C ; Return ASCII code of key pressed in Accumulator. If no key: C=1.
+0233+  0000             BCMD_PRINT        = $E4EB ; Basic command PRINT
+0234+  0000             TIMEDELAY         = $E88C ; Time delay 15.625 ms * number in U-Reg. BREAK is possible.
+0235+  0000             PRGMDISP          = $E8CA ; Display program.
+0236+  0000             USING_FRMT        = $EA78 ; USING formatting. If error C = 1.
+0237+  0000             INIT_CURS         = $ECAE ; Initializes cursor parameters.
+0238+  0000             OUTBUF2LCD        = $ECFA ; Output 26 characters in Output Buffer to LCD
+0239+  0000             TEXTUREG_A        = $ED00 ; Output of text on LCD. U-Reg=start address; A=length.
+0240+  0000             TEXTUREG_XL       = $ED3B ; Outputs text from U-Reg. XL = number of characters
+0241+  0000             CHAR2COL          = $ED4D ; Output character at next matrix column
+0242+  0000             CHARA2COL         = $ED57 ; Output character in A to next matrix column.
+0243+  0000             CHARA2COLX        = $ED5B ; Output character in A to matrix column X-Reg points to.
+0244+  0000             A2HEX             = $ED7D ; Convert character in A to HEX nibble
+0245+  0000             ASCII2HEX         = $ED95 ; Convert two ASCII characters from X-Reg into HEX
+0246+  0000             HEX2COL           = $EDEF ; Output HEX value from A to next matrix column
+0247+  0000             GPRNT_A_2LCD      = $EDF6 ; Output of A as a GRPRINT (bit pattern) on LCD 
+0248+  0000             MATRIX_PTR2XREG   = $EE1F ; Calculates matrix column address from matrix pointer, to X-Reg.
+0249+  0000             MATRIX_A2XREG     = $EE22 ; Calculated matrix column address from A, to X-Reg
+0250+  0000             SAVELCD2BUF       = $EE80 ; Save LCD to buffer
+0251+  0000             BUF2LCD           = $EE99 ; Transfer buffer to LCD
+0252+  0000             ARX2STRNG         = $EF1B ; Convert AR-X to string
+0253+  0000             TXT2LCD           = $EF44 ; Output text on LCD display.
+0254+  0000             TXT2LCD_ARY       = $EF5B ; Output text on LCD from AR-Y to 7AXL
+0255+  0000             PREPLCDOUT        = $EF67 ; Prepare the LCD output
+0256+  0000             PC1500_DIV_RESET  = $F004 ; PC1500_DIVIDER_RESET (CE1)
+0257+  0000             PC1500_UREG_OUTP  = $F005 ; PC1500_U_REG_OUTPUT (CE1)
+0258+  0000             PC1500_SER_XFR    = $F006 ; PC1500_SERIAL_XFR (CE1)
+0259+  0000             PC1500_F_REG      = $F007 ; PC1500_F_REG_LD/DIV (CE1)
+0260+  0000             PC1500_PRT_C      = $F008 ; PC1500_PRT_C (CE1)
+0261+  0000             PC1500_G_REG      = $F009 ; PC1500_G_REG (CE1)
+0262+  0000             PC1500_MSK_REG    = $F00A ; PC1500_MSK_REG (CE1)
+0263+  0000             PC1500_IF_REG     = $F00B ; PC1500_IF_REG (CE1)
+0264+  0000             PC1500_PRT_A_DIR  = $F00C ; PC1500_PRT_A_DIR (CE1)
+0265+  0000             PC1500_PRT_B_DIR  = $F00D ; PC1500_PRT_B_DIR (CE1)
+0266+  0000             PC1500_PRT_A      = $F00E ; PC1500_PRT_A (CE1)
+0267+  0000             PC1500_PRT_B      = $F00F ; PC1500_PRT_B (CE1)
+0268+  0000             TOKENIZE_INBUF    = $F957 ; Tokenizer. Convert input buffer to program line.
+0006   0000             #INCLUDE    "lib/CE-155.lib"
+0001+  0000              ; CE-155 library file
+0002+  0000             RAM_ST            = $2000 ; Start of RAM w/CE-155, 8K RAM module
+0003+  0000             RESMEM_ST         = $2008 ; Reserve memroy area w/CE-155 (2008-20C4)
+0004+  0000             PRGMEM_ST         = $20C5 ; Start of program memory w/CE-155
+0007   0000             #INCLUDE    "lib/PC-1500_Macros.lib"
+0001+  0000              ; PC-1500 Macros
+0002+  0000             ;------------------------------------------------------------------------------------------------------------
+0003+  0000             ; Assembly macros used to encode arguments for lh5801 'macros' that take arguments inline after CALL
+0004+  0000             #define EQU .EQU
+0005+  0000             
+0006+  0000             COMMA:      EQU $2C                         ; ',' used for macros
+0007+  0000             CR:         EQU $0D                         ; '/CR' used for macros
+0008+  0000             DASH:       EQU $2D                         ; '-' used for macros
+0009+  0000             HASH:       EQU $23                         ; '#' used for macros
+0010+  0000             SEMI:       EQU $3B                         ; ';' used for macros
+0011+  0000             QUOTE:      EQU $22                         ; '-' used for macros
+0012+  0000             DOLLAR:     EQU $24                         ; '#' used for macros
+0013+  0000             PERCENT:    EQU $25                         ; ';' used for macros
+0014+  0000             
+0015+  0000             
+0016+  0000             TOK_OFF:    EQU $F19E                       ; OFF   command token
+0017+  0000             TOK_ON:     EQU $F19C                       ; ON    command token
+0018+  0000             TOK_TAB:    EQU $F0BB                       ; TAB   command token
+0019+  0000             TOK_USING:  EQU $F085                       ; USING command token
+0020+  0000             
+0021+  0000             
+0022+  0000             #define ABRF(n8)        .BYTE n8 - $ - 1    ; calculate forward branch
+0023+  0000             #define ABYT(n8)        .BYTE n8            ; use byte verbatium
+0024+  0000             #define ABYTL(n16)      .BYTE n16 & $FF     ; use byte verbatium
+0025+  0000             #define ACHR(ch)        .BYTE ch            ; character
+0026+  0000             #define AWRD(n16)       .WORD n16           ; use word value verbatum
+0027+  0000             #define CNIB(n81,n82)   .BYTE ((n81 & $F0) | (n82 & $0F))   ; calculates control nibble
+0028+  0000             #define HB(n16)         (n16 >> 8)          ; Return HB of 16bit value
+0029+  0000             #define LB(n16)         (n16 & $FF)         ; Return HB of 16bit value
+0030+  0000             
+0031+  0000             .MSFIRST
+0008   0000             
+0009   0000             ; Calculate file length for header Last-.ORG + header length - 1
+0010   0000             ;                                  4184-3800-1 = 0983
+0011   0000             ;
+0012   0000             ; Offset from start of bin file to address: 3800 + bin_file_add - 1B
+0013   0000             
+0014   0000             ;------------------------------------------------------------------------------
+0015   0000             ; CE-158 Header
+0016   0000             ;------------------------------------------------------------------------------
+0017   0000             CE158_Header:
+0018   0000 01           .BYTE $01 \ .TEXT "BCOM"                   ; CE-158 header
+0018   0001 42 43 4F 4D 
+0019   0005 42 41 53 49  .TEXT "BASIC1501" \ .FILL 7,$00            ; FILL (16 - NAME_LENGTH),$00     
+0019   0009 43 31 35 30 
+0019   000D 31 
+0019   000E 00 00 00 00 
+0019   0012 00 00 00 
+0020   0015 38 00        .WORD $3800                                ; same as .ORG
+0021   0017 09 83        .WORD $0983                                ; Length of output in bytes
+0022   0019 FF FF        .WORD $FFFF                                ; Filler
+0023   001B             
+0024   001B             
+0025   3800             .ORG $3800
+0026   3800             
+0027   3800             ;------------------------------------------------------------------------------
+0028   3800             ; Filler from $3000~$3807
+0029   3800             ;------------------------------------------------------------------------------
+0030   3800             FILLER_3800:
+0031   3800 10 01 40 96     .BYTE   $10, $01, $40, $96, $60, $00, $01, $00
+0031   3804 60 00 01 00 
+0032   3808             
+0033   3808             ;------------------------------------------------------------------------------
+0034   3808             ; $3808 is start of Resereve memory area with CE-155 8K expansion
+0035   3808             ;------------------------------------------------------------------------------
+0036   3808             ; 3808 .RES_I    " DUM MOK HEX HVAL LOW HIG ":
+0037   3808             RES_I:
+0038   3808 20 44 55 4D     .TEXT   " DUM MOK"
+0038   380C 20 4D 4F 4B 
+0039   3810 20 48 45 58     .TEXT   " HEX HVA"
+0039   3814 20 48 56 41 
+0040   3818 4C 20 4C 4F     .TEXT   "L LOW HI"
+0040   381C 57 20 48 49 
+0041   3820 47              .TEXT   "G"
+0042   3821 00              .BYTE   $00
+0043   3822             
+0044   3822             ; 3822 .RES_II   " STR CAP INS  $  APO  &   ":
+0045   3822             RES_II:
+0046   3822 20 53 54 52     .TEXT  " STR CAP"
+0046   3826 20 43 41 50 
+0047   382A 20 49 4E 53     .TEXT  " INS  $ "
+0047   382E 20 20 24 20 
+0048   3832 20 41 50 4F     .TEXT  " APO  &"
+0048   3836 20 20 26 
+0049   3839 00 00 00        .BYTE $00, $00, $00
+0050   383C             
+0051   383C             ; 383C .RES_III  " DIS SET RST ASK INV TBL  ":
+0052   383C             RES_III:
+0053   383C 20 44 49 53     .TEXT  " DIS SET"
+0053   3840 20 53 45 54 
+0054   3844 20 52 53 54     .TEXT  " RST ASK"
+0054   3848 20 41 53 4B 
+0055   384C 20 49 4E 56     .TEXT  " INV TBL"
+0055   3850 20 54 42 4C 
+0056   3854 00 00           .BYTE $00, $00
+0057   3856             
+0058   3856             
+0059   3856             RESREG_I.F1: ; 3856
+0060   3856 01 F0 64        .BYTE   $01, $F0, $64
+0061   3859             
+0062   3859             RESREG_I.F2: ; 3859
+0063   3859 02 F0 A1        .BYTE   $02, $F0, $A1
+0064   385C             
+0065   385C             RESREG_I.F3: ; 385C
+0066   385C 03 F0 63        .BYTE   $03, $F0, $63
+0067   385F             
+0068   385F             RESREG_I.F4: ; 385F
+0069   385F 04 F0 67        .BYTE   $04, $F0, $67
+0070   3862             
+0071   3862             RESREG_I.F5: ; 3862
+0072   3862 05 F0 65        .BYTE   $05, $F0, $65
+0073   3865             
+0074   3865             RESREG_I.F6: ; 3865
+0075   3865 06 F0 66        .BYTE   $06, $F0, $66
+0076   3868             
+0077   3868             RESREG_II.F1: ; 3868
+0078   3868 11 F0 68        .BYTE   $11, $F0, $68
+0079   386B             
+0080   386B             RESREG_II.F2: ; 386B
+0081   386B 12 F0 62        .BYTE   $12, $F0, $62
+0082   386E             
+0083   386E             RESREG_II.F3_SPACE_STR: ; 386E
+0084   386E 13 F0 61        .BYTE   $13, $F0, $61
+0085   3871             
+0086   3871             RESREG_III.F1: ; 3871
+0087   3871 09 F0 81        .BYTE   $09, $F0, $81
+0088   3874             
+0089   3874             RESREG_III.F2: ; 3874
+0090   3874 0A F0 83        .BYTE   $0A, $F0, $83
+0091   3877             
+0092   3877             RESREG_III.F3: ; 3877
+0093   3877 0B F0 86        .BYTE   $0B, $F0, $86
+0094   387A             
+0095   387A             RESREG_III.F4: ; 387A
+0096   387A 0C F0 60        .BYTE   $0C, $F0, $60
+0097   387D             
+0098   387D             RESREG_III.F5: ; 387D
+0099   387D 0D F0 A3        .BYTE   $0D, $F0, $A3
+0100   3880             
+0101   3880             RESREG_III.F6: ; 3880
+0102   3880 0E F0 56        .BYTE   $0E, $F0, $56
+0103   3883             
+0104   3883             RESREG_II.F5: ; 3883 CALL&E33F@:
+0105   3883 15 F1 8A 26     .BYTE   $15,$F1,$8A,$26,$45,$33,$33,$46, $40,$16,$26,$00,$00,$00,$00,$00
+0105   3887 45 33 33 46 
+0105   388B 40 16 26 00 
+0105   388F 00 00 00 00 
+0106   3893 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+0106   3897 00 00 00 00 
+0106   389B 00 00 00 00 
+0106   389F 00 00 00 00 
+0107   38A3 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+0107   38A7 00 00 00 00 
+0107   38AB 00 00 00 00 
+0107   38AF 00 00 00 00 
+0108   38B3 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+0108   38B7 00 00 00 00 
+0108   38BB 00 00 00 00 
+0108   38BF 00 00 00 00 
+0109   38C3 00 00           .BYTE   $00,$00
+0110   38C5             
+0111   38C5             
+0112   38C5             
+0113   38C5             ;------------------------------------------------------------------------------
+0114   38C5             ; BASIC command - DELETE a number of lines
+0115   38C5             ; DELETE n,p - from n to p inclusive
+0116   38C5             ; DELETE n   - from n
+0117   38C5             ; DELETE p   - up to p
+0118   38C5             ;------------------------------------------------------------------------------
+0119   38C5             DELETE: ; 38C5
+0120   38C5 C2              VEJ (C2) \\                             ; If next character is not 2C ',' then branch fwd BRANCH_38CE
+0120   38C6             
+0120   38C6             
+0121   38C6 2C                  ACHR(COMMA) \\                      ;
+0121   38C7             
+0121   38C7             
+0122   38C7 06                  ABRF(BRANCH_38CE)                   ;
+0123   38C8 CC              VEJ (CC)                                ; Loads X-Reg with address at 78(65) 78(66) (Start of BASIC prg)
+0124   38C9 65                  ABYTL($7865)                        ;
+0125   38CA FD 88               PSH  X                              ;
+0126   38CC 8E 0E           BCH BRANCH_38DC                         ;
+0127   38CE             
+0128   38CE             BRANCH_38CE: ; 38CE
+0129   38CE C6              VEJ (C6)                                ; Decrements Y-Reg by 2 bytes for tokens, 1 byte for characters in U-Reg
+0130   38CF DE              VEJ (DE)                                ; Calculates formula to which Y points,
+0131   38D0 3D                  ABRF(BRANCH_390E)                   ; passes result to AR-X. Jump FWD (n) if error
+0132   38D1 D0              VEJ (D0) \\                             ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0132   38D2             
+0132   38D2             
+0133   38D2 00                  ABYT($00) \\                        ; If range exceeded: Branch fwd BRANCH_390E
+0133   38D3             
+0133   38D3             
+0134   38D3 3A                  ABRF(BRANCH_390E)                   ;
+0135   38D4 BE 39 10        SJP SUB_3910                            ;
+0136   38D7 FD A8           PSH U                                   ;
+0137   38D9 C2              VEJ (C2) \\                             ; If next character is not 2C ',' then branch fwd BRANCH_3902
+0137   38DA             
+0137   38DA             
+0138   38DA 2C                      ACHR(COMMA) \\                  ;
+0138   38DB             
+0138   38DB             
+0139   38DB 26                      ABRF(BRANCH_3902)               ;
+0140   38DC             
+0141   38DC             BRANCH_38DC: ; 38DC
+0142   38DC DE              VEJ (DE) \\                             ; Calculates formula to which Y points,
+0142   38DD             
+0142   38DD             
+0143   38DD 30                      ABRF(BRANCH_390E)               ; passes result to AR-X. Jump FWD (n) if error
+0144   38DE D0              VEJ (D0) \\                             ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0144   38DF             
+0144   38DF             
+0145   38DF 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd BRANCH_38EE
+0145   38E0             
+0145   38E0             
+0146   38E0 2D                      ABRF(BRANCH_390E)               ;
+0147   38E1 64              INC U                                   ;
+0148   38E2 BE 39 10        SJP SUB_3910                            ;
+0149   38E5             
+0150   38E5             BRANCH_38E5: ; 38E5
+0151   38E5 FD 0A           POP X                                   ;
+0152   38E7 FD 98           PSH Y                                   ;
+0153   38E9 FD 5A           STX Y                                   ;
+0154   38EB CC              VEJ (CC) \\                             ; Loads X-Reg with address at 78(67) 78(68) (End of BASIC RAM (H))
+0154   38EC             
+0154   38EC             
+0155   38EC 67                      ABYTL($7867)                    ;   
+0156   38ED 56              DEC Y                                   ;
+0157   38EE             
+0158   38EE             BRANCH_38EE: ; 38EE
+0159   38EE 66              DEC U                                   ;
+0160   38EF             
+0161   38EF             BRANCH_38EF: ; 38EF
+0162   38EF 65              LIN U                                   ;
+0163   38F0 51              SIN Y                                   ;
+0164   38F1 A4              LDA UH                                  ;
+0165   38F2 86              CPA XH                                  ;
+0166   38F3 99 06           BZR BRANCH_38EF                         ;
+0167   38F5             
+0168   38F5 24              LDA UL                                  ;
+0169   38F6 06              CPA XL                                  ;
+0170   38F7 99 0A           BZR BRANCH_38EF                         ;
+0171   38F9             
+0172   38F9 25              LDA (U)                                 ;
+0173   38FA 1E              STA (Y)                                 ;
+0174   38FB FD 18           LDX Y                                   ;
+0175   38FD CA              VEJ (CA) \\                             ; Transfers X to 78(67), 78(68). (End of BASIC RAM (H))
+0175   38FE             
+0175   38FE             
+0176   38FE 67                      ABYTL($7867)                    ;
+0177   38FF FD 1A           POP  Y                                  ;
+0178   3901 E2              VEJ (E2)                                ; BASIC interpreter: Y-Reg points to command or line end
+0179   3902             
+0180   3902             BRANCH_3902: ; 3902
+0181   3902 C6              VEJ (C6)                                ; Decrements Y-Reg by 2 bytes for tokens, 1 byte for characters in U-Reg
+0182   3903 C2              VEJ (C2)  \\                            ; If next character is not 0D 'CR' then branch fwd BRANCH_390C
+0182   3904             
+0182   3904             
+0183   3904 0D                      ACHR(CR) \\                     ;
+0183   3905             
+0183   3905             
+0184   3905 06                      ABRF(BRANCH_390C)               ;
+0185   3906 CC              VEJ (CC) \\                             ; Loads X-Reg with address at 78(67) 78(68) (End of BASIC RAM (H))
+0185   3907             
+0185   3907             
+0186   3907 67                      ABYTL($7867)                    ;
+0187   3908 FD 6A           STX U                                   ;
+0188   390A 9E 27           BCH BRANCH_38E5                         ;
+0189   390C             
+0190   390C             BRANCH_390C: ; 390C
+0191   390C C6              VEJ  (C6)                               ; Decrements Y-Reg by 2 bytes for tokens, 1 byte for characters in U-Reg
+0192   390D E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0193   390E             
+0194   390E             BRANCH_390E: ; 390E
+0195   390E E0              VEJ  (E0)                               ; Output error from UH
+0196   390F 8B              .BYTE $8B                               ; Orphan?
+0197   3910             
+0198   3910             
+0199   3910             
+0200   3910             ;------------------------------------------------------------------------------
+0201   3910             ; SUB_3910 - Used by DELETE command
+0202   3910             ;  
+0203   3910             ;------------------------------------------------------------------------------
+0204   3910             SUB_3910: ; 3910
+0205   3910 CC              VEJ  (CC) \\                            ; Loads X-Reg with address at 78(65) 78(66) (Start of BASIC program)
+0205   3911             
+0205   3911             
+0206   3911 65                      ABYTL($7865)                    ;
+0207   3912             
+0208   3912             BRANCH_3912: ; 3912
+0209   3912 05              LDA  (X)                                ;
+0210   3913 B7 FF           CPI  A,$FF                              ;
+0211   3915 8B 06           BZS  BRANCH_391D                        ;
+0212   3917 05              LDA  (X)                                ;
+0213   3918 A6              CPA  UH                                 ;
+0214   3919 81 0C           BCR  BRANCH_3927                        ;
+0215   391B 8B 03           BZS  BRANCH_3920                        ;
+0216   391D             
+0217   391D             BRANCH_391D: ; 391D
+0218   391D FD 6A           STX  U                                  ;
+0219   391F 9A              RTN                                     ; Done, return
+0220   3920             
+0221   3920             
+0222   3920             BRANCH_3920: ; 3920
+0223   3920 44              INC  X                                  ;
+0224   3921 47              LDE  X                                  ;
+0225   3922 26              CPA  UL                                 ;
+0226   3923 81 02           BCR  BRANCH_3927                        ;
+0227   3925 9E 0A           BCH  BRANCH_391D                        ;
+0228   3927             
+0229   3927             BRANCH_3927:
+0230   3927 44              INC  X                                  ;
+0231   3928 44              INC  X                                  ;
+0232   3929 05              LDA  (X)                                ;
+0233   392A DD              INC  A                                  ;
+0234   392B F9              REC                                     ;
+0235   392C FD CA           ADR  X                                  ;
+0236   392E 9E 1E           BCH  BRANCH_3912                        ;
+0237   3930             
+0238   3930             
+0239   3930             
+0240   3930             ;------------------------------------------------------------------------------
+0241   3930             ; BASIC command - DISP n
+0242   3930             ; Used after a PRINT; allows the display of more than 26 characters 
+0243   3930             ; (automatic shift of the string on the screen).
+0244   3930             ;------------------------------------------------------------------------------
+0245   3930             DISP:
+0246   3930 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0246   3931             
+0246   3931             
+0247   3931 37                      ABRF(BRANCH_3969)               ; passes result to AR-X. Jump FWD (n) if error
+0248   3932 D0              VEJ  (D0)  \\                           ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0248   3933             
+0248   3933             
+0249   3933 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+0249   3934             
+0249   3934             
+0250   3934 34                      ABRF(BRANCH_3969)               ; 
+0251   3935 AE 78 73        STA  (WAIT_CTR_L)                       ;
+0252   3938             
+0253   3938             BRANCH_3938:
+0254   3938 48 7B           LDI  XH,HB(OUT_BUF+1)                   ; OUT_BUF+1 High Byte
+0255   393A 4A 61           LDI  XL,LB(OUT_BUF+1)                   ; OUT_BUF+1 Low Byte
+0256   393C             
+0257   393C             BRANCH_393C:                                ; Shifts Output Buffer 1 char left
+0258   393C 47              LDE  X                                  ; A = (X), then X = X - 1
+0259   393D 41              SIN  X                                  ; (X) = A, then X = X + 1
+0260   393E 44              INC  X                                  ; 
+0261   393F 4E B0           CPI  XL,$B0                             ;
+0262   3941 99 07           BZR  BRANCH_393C                        ;
+0263   3943             
+0264   3943 BE EC AE        SJP  INIT_CURS                          ; Initializes cursor parameters.
+0265   3946 BE EC FA        SJP  OUTBUF2LCD                         ; Output 26 characters in Output Buffer to LCD
+0266   3949             
+0267   3949             BRANCH_3949:
+0268   3949 BE E4 2C        SJP  KEY2ASCII                          ; Return ASCII code of key pressed in A. If no key: C=1.
+0269   394C B7 18           CPI  A,$18                              ; CL key. 
+0270   394E 8B 18           BZS  BRANCH_3968                        ; Branch if equal
+0271   3950             
+0272   3950 B7 20           CPI  A,$20                              ; Space key
+0273   3952 9B 0B           BZS  BRANCH_3949                        ; Branch if equal
+0274   3954             
+0275   3954 B7 0C           CPI  A,$0C                              ; Right arrow
+0276   3956 8B 0B           BZS  BR_DISP_RA                         ; Skips pause and scroll now (***Fixed from original)
+0277   3958 A5 78 73        LDA  (WAIT_CTR_L)                       ; Load delay value
+0278   395B 2A              STA  UL                                 ;
+0279   395C             
+0280   395C             BRANCH_395C:
+0281   395C B5 FF           LDI  A,$FF                              ; $FF is 1 unit of delay
+0282   395E             
+0283   395E             BRANCH_395E:
+0284   395E DF              DEC  A                                  ;
+0285   395F 99 03           BZR  BRANCH_395E                        ;
+0286   3961 88 07           LOP  UL,BRANCH_395C                     ; Delay loop
+0287   3963                 
+0288   3963             BR_DISP_RA:    
+0289   3963 A5 7B 7A        LDA  (OUT_BUF + $1A)                    ;
+0290   3966 99 30           BZR  BRANCH_3938                        ; If we are not at end of text, keep scrolling
+0291   3968             
+0292   3968             BRANCH_3968:
+0293   3968 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0294   3969             
+0295   3969             BRANCH_3969:
+0296   3969 E0              VEJ  (E0)                               ; Output error from UH
+0297   396A             
+0298   396A             ; Filler
+0299   396A             FILLER_396A:
+0300   396A 00 00 00 00     .BYTE $00, $00, $00, $00                ; filler
+0301   396E             
+0302   396E             
+0303   396E             
+0304   396E             ;------------------------------------------------------------------------------
+0305   396E             ; BASIC command - RENUM  renumbering of lines from 10 by 10.
+0306   396E             ;------------------------------------------------------------------------------
+0307   396E             RENUM:
+0308   396E FD 98           PSH  Y                                  ; 
+0309   3970 CC              VEJ  (CC)                               ; Loads X-Reg with address at 78(65) 78(66) (Start of BASIC in RAM)
+0310   3971 65                      ABYTL($7865)                    ;
+0311   3972 58 00           LDI  YH,$00                             ;
+0312   3974 5A 00           LDI  YL,$00                             ;
+0313   3976             
+0314   3976             BRANCH_3976:
+0315   3976 B5 FF           LDI  A,$FF                              ;
+0316   3978 07              CPA  (X)                                ;
+0317   3979 89 03           BZR  BRANCH_397E                        ;
+0318   397B             
+0319   397B FD 1A           POP  Y                                  ;
+0320   397D E2              VEJ  (E2)                               ; Return to BASIC interpreter: Y-Reg points to command or line end
+0321   397E             
+0322   397E             BRANCH_397E:
+0323   397E B5 0A           LDI  A,$0A                              ;
+0324   3980 F9              REC                                     ;
+0325   3981 FD DA           ADR  Y                                  ;
+0326   3983 94              LDA  YH                                 ;
+0327   3984 41              SIN  X                                  ;
+0328   3985 14              LDA  YL                                 ;
+0329   3986 41              SIN  X                                  ;
+0330   3987 05              LDA  (X)                                ;
+0331   3988 DD              INC  A                                  ;
+0332   3989 FD CA           ADR  X                                  ;
+0333   398B 9E 17           BCH  BRANCH_3976                        ;
+0334   398D             
+0335   398D             
+0336   398D             ; Filler
+0337   398D             FILLER_398D:
+0338   398D 00 00 00        .BYTE $00, $00, $00                     ; filler
+0339   3990             
+0340   3990             
+0341   3990             
+0342   3990             ;------------------------------------------------------------------------------
+0343   3990             ; COL2BITPOS - Helper for LCD commands
+0344   3990             ; (RND_VAL) = R,  (RND_VAL + 1) = C, (RND_VAL + 2) = Contigious LCD column
+0345   3990             ;------------------------------------------------------------------------------
+0346   3990             COL2BITPOS:
+0347   3990 BE EE 22        SJP  MATRIX_A2XREG                      ; Calculated matrix LCD column address from A, to X-Reg
+0348   3993 4C 76           CPI  XH,$76                             ;
+0349   3995 83 0E           BCS  BRANCH_39A5                        ; if HB of address >= $76 branch
+0350   3997 45              LIN  X                                  ; Load this byte of LCD RAM
+0351   3998 B9 0F           ANI  A,$0F                              ; Clear high nibble
+0352   399A 2A              STA  UL                                 ; Save it
+0353   399B 45              LIN  X                                  ; Do same for next address
+0354   399C B9 0F           ANI  A,$0F                              ;
+0355   399E F1              AEX                                     ; Swap nibbles in A
+0356   399F             
+0357   399F             BRANCH_399F:
+0358   399F F9              REC                                     ; Reset carry
+0359   39A0 22              ADC  UL                                 ; Add two nibbles, make contigious byte from split one?
+0360   39A1 AE 7B 02        STA  (RND_VAL + 2)                      ; Contigious LCD RAM column
+0361   39A4 9A              RTN                                     ; Done, return
+0362   39A5             
+0363   39A5             BRANCH_39A5:
+0364   39A5 45              LIN  X                                  ; Load A with byte of LCD RAM
+0365   39A6 B9 F0           ANI  A,$F0                              ; Clear low nibble
+0366   39A8 F1              AEX                                     ; Swap nibbles in A
+0367   39A9 2A              STA  UL                                 ; Save it
+0368   39AA 45              LIN  X                                  ; Load A with next byte of LCD RAM
+0369   39AB B9 F0           ANI  A,$F0                              ; Clear low nibble
+0370   39AD 9E 10           BCH  BRANCH_399F                        ; Make one nibble from two and return
+0371   39AF             
+0372   39AF             
+0373   39AF             
+0374   39AF             ;------------------------------------------------------------------------------
+0375   39AF             ; BASIC command - SET Row,Column: turn on pixel, row R (0 to 6), column C (0 to 155).
+0376   39AF             ; (RND_VAL) = R,  (RND_VAL + 1) = C, (RND_VAL + 2) = Contigious LCD column
+0377   39AF             ; Example:
+0378   39AF             ;  10 WAIT:PRINT"3,64 = 0"
+0379   39AF             ;  20 SET 3,64:A = ASK(3,64)
+0380   39AF             ;  30 WAIT 0:PRINT "3,64 =";A:SET 3,64
+0381   39AF             ;  40 A$=INKEY$:IF A$ = "" THEN GOTO 40
+0382   39AF             ;  50 RESET 3,64:A = ASK(3,64)
+0383   39AF             ;  60 WAIT: PRINT "3,64 =";A
+0384   39AF             ;  70 END
+0385   39AF             ;------------------------------------------------------------------------------
+0386   39AF             SET: ; 39AF
+0387   39AF BE 3D C5        SJP  PARSE_INT_INT                      ; Saves L, C to (RND_VAL) and (RND_VAL + 1)
+0388   39B2 FD 98           PSH  Y                                  ; Not sure what Y is here
+0389   39B4 BE 39 90        SJP  COL2BITPOS                         ; (RND_VAL + 2) = Contigious LCD RAM column
+0390   39B7 BE 3A 17        SJP  ROW2BITPOS                         ; A = 2 ^ ROW?
+0391   39BA             
+0392   39BA AB 7B 02        ORA  (RND_VAL + 2)                      ; Set ROW bit?
+0393   39BD FD C8           PSH  A                                  ;
+0394   39BF A5 7B 01        LDA  (RND_VAL + 1)                      ; A = Column
+0395   39C2 BE EE 22        SJP  MATRIX_A2XREG                      ; Calculated LCD column address from A, save to X
+0396   39C5 FD 8A           POP  A                                  ;
+0397   39C7 BE ED F6        SJP  GPRNT_A_2LCD                       ; Output of A as a GRPRINT (bit pattern) on LCD 
+0398   39CA FD 1A           POP  Y                                  ;
+0399   39CC E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0400   39CD             
+0401   39CD             
+0402   39CD             
+0403   39CD             ;------------------------------------------------------------------------------
+0404   39CD             ; BASIC command - RESET Row,Column:: turns off pixel. Row R (0 to 6), Column C (0 to 155)
+0405   39CD             ; (RND_VAL) = R,  (RND_VAL + 1) = C, (RND_VAL + 2) = Contigious LCD column
+0406   39CD             ; Example:
+0407   39CD             ;  10 WAIT:PRINT"3,64 = 0"
+0408   39CD             ;  20 SET 3,64:A = ASK(3,64)
+0409   39CD             ;  30 WAIT 0:PRINT "3,64 =";A:SET 3,64
+0410   39CD             ;  40 A$=INKEY$:IF A$ = "" THEN GOTO 40
+0411   39CD             ;  50 RESET 3,64:A = ASK(3,64)
+0412   39CD             ;  60 WAIT: PRINT "3,64 =";A
+0413   39CD             ;  70 END
+0414   39CD             ;------------------------------------------------------------------------------
+0415   39CD             RESET: ; 39CD
+0416   39CD BE 3D C5        SJP  PARSE_INT_INT                      ; Saves R, C to (RND_VAL) and (RND_VAL + 1)
+0417   39D0 FD 98           PSH  Y                                  ;
+0418   39D2 BE 39 90        SJP  COL2BITPOS                         ;
+0419   39D5 BE 3A 17        SJP  ROW2BITPOS                         ;
+0420   39D8 A9 7B 02        AND  (RND_VAL + 2)                      ; (RND_VAL + 2) = Contigious LCD column
+0421   39DB BD FF           EAI  $FF                                ;
+0422   39DD             
+0423   39DD             BRANCH_39DD:
+0424   39DD A9 7B 02        AND  (RND_VAL + 2)                      ; (RND_VAL + 2) = Contigious LCD column
+0425   39E0 FD C8           PSH  A                                  ;
+0426   39E2 A5 7B 01        LDA  (RND_VAL + 1)                      ; (RND_VAL + 1) = C
+0427   39E5 BE EE 22        SJP  MATRIX_A2XREG                      ; Calculated matrix column address from A, to X-Reg
+0428   39E8 FD 8A           POP  A                                  ;
+0429   39EA BE ED F6        SJP  GPRNT_A_2LCD                       ; Output of A as a GRPRINT (bit pattern) on LCD 
+0430   39ED FD 1A           POP  Y                                  ;
+0431   39EF E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0432   39F0             
+0433   39F0             
+0434   39F0             
+0435   39F0             ;------------------------------------------------------------------------------
+0436   39F0             ; BASIC command - ASK (R,C) Returns 1 if the dot is on, 0 otherwise. 
+0437   39F0             ; Row R (0 to 6), Column C (0 to 155).
+0438   39F0             ; (RND_VAL) = R,  (RND_VAL + 1) = C, (RND_VAL + 2) = Contigious LCD column
+0439   39F0             ; Example:
+0440   39F0             ;  10 WAIT:PRINT"3,64 = 0"
+0441   39F0             ;  20 SET 3,64:A = ASK(3,64)
+0442   39F0             ;  30 WAIT 0:PRINT "3,64 =";A:SET 3,64
+0443   39F0             ;  40 A$=INKEY$:IF A$ = "" THEN GOTO 40
+0444   39F0             ;  50 RESET 3,64:A = ASK(3,64)
+0445   39F0             ;  60 WAIT: PRINT "3,64 =";A
+0446   39F0             ;  70 END
+0447   39F0             ;------------------------------------------------------------------------------
+0448   39F0             ASK: ; 39F0
+0449   39F0 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & save to U-Reg. A1 specifies the range. 
+0449   39F1             
+0449   39F1             
+0450   39F1 08                      ABYT($08) \\                    ; *** Fixed range from original
+0450   39F2             
+0450   39F2             
+0451   39F2 00                      ABRF(BRANCH_39F3)               ; If range exceeded: Branch fwd
+0452   39F3             
+0453   39F3             BRANCH_39F3:
+0454   39F3                 ;LDA  UL
+0455   39F3 AE 7B 01        STA  (RND_VAL + 1)                      ; Not sure what A is here
+0456   39F6 CD 30           VMJ  $30                                ; Get AR-X from Basic Stack
+0457   39F8 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0457   39F9             
+0457   39F9             
+0458   39F9 08                      ABYT($08) \\                    ; *** Fixed range from original
+0458   39FA             
+0458   39FA             
+0459   39FA 00                      ABRF(BRANCH_39FB)               ; If range exceeded: Branch fwd
+0460   39FB             
+0461   39FB             BRANCH_39FB:
+0462   39FB                 ;LDA  UL
+0463   39FB AE 7B 00        STA  (RND_VAL)                          ; (RND_VAL) = R
+0464   39FE FD 98           PSH  Y                                  ;
+0465   3A00 A5 7B 01        LDA  (RND_VAL + 1)                      ; (RND_VAL + 1) = C
+0466   3A03             
+0467   3A03 BE 39 90        SJP  COL2BITPOS                         ;
+0468   3A06 BE 3A 17        SJP  ROW2BITPOS                         ; Returns position in A
+0469   3A09 A9 7B 02        AND  (RND_VAL + 2)                      ; (RND_VAL + 2) = Contigious LCD column
+0470   3A0C B7 00           CPI  A,$00                              ;
+0471   3A0E 8B 02           BZS  BRANCH_3A12                        ;
+0472   3A10 B5 01           LDI  A,$01                              ;
+0473   3A12             
+0474   3A12             BRANCH_3A12:
+0475   3A12 FD 1A           POP  Y                                  ;
+0476   3A14 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0477   3A17             
+0478   3A17             
+0479   3A17             
+0480   3A17             ;------------------------------------------------------------------------------
+0481   3A17             ; ROW2BITPOS - Helper for LCD commands
+0482   3A17             ; (RND_VAL) = R,  (RND_VAL + 1) = C, Returns position in A
+0483   3A17             ;------------------------------------------------------------------------------
+0484   3A17             ROW2BITPOS:
+0485   3A17 A5 7B 00        LDA  (RND_VAL)                          ; A = ROW
+0486   3A1A 2A              STA  UL                                 ; UL = ROW
+0487   3A1B B5 01           LDI  A,$01                              ;
+0488   3A1D             
+0489   3A1D             BRANCH_3A1D:
+0490   3A1D D9              SHL                                     ; A = 2
+0491   3A1E 88 03           LOP  UL,BRANCH_3A1D                     ; 
+0492   3A20 D5              SHR                                     ;
+0493   3A21 9A              RTN                                     ; A = 2 ^ ROW?
+0494   3A22             
+0495   3A22             
+0496   3A22             
+0497   3A22             ;------------------------------------------------------------------------------
+0498   3A22             ; BASIC command - INSTR (string 1, string 2, n) 
+0499   3A22             ; Returns the position of string 2 in string 1 starting at position n.
+0500   3A22             ; Example:
+0501   3A22             ;   A=INSTR("PASCAL","S",0)  A=3
+0502   3A22             ;   A=INSTR("COUCOU","0",3)  A=5
+0503   3A22             ;   A=INSTR("BONJOUR","B",2) A=0
+0504   3A22             ;------------------------------------------------------------------------------
+0505   3A22             INSTR: ; 3A22
+0506   3A22 D0              VEJ  (D0)           \\                  ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0506   3A23             
+0506   3A23             
+0507   3A23 08                      ABYT($08)   \\                  ; If range exceeded: Branch fwd A2
+0507   3A24             
+0507   3A24             
+0508   3A24 E0                      ABRF(BRANCH_3905)               ;
+0509   3A25 AE 7B 00        STA  (RND_VAL)                          ; Random number buffer used for misc buffer
+0510   3A28 CD 30           VMJ  $30                                ; Get AR-X from basic stack
+0511   3A2A DC              VEJ  (DC)                               ; Load CSI from AR-X to X-Reg
+0512   3A2B FD 88           PSH  X                                  ;
+0513   3A2D FD C8           PSH  A                                  ;
+0514   3A2F F9              REC                                     ;
+0515   3A30 02              ADC  XL                                 ;
+0516   3A31 2A              STA  UL                                 ;
+0517   3A32 FD A8           PSH  U                                  ;
+0518   3A34 CD 30           VMJ  $30                                ; Get AR-X from basic stack
+0519   3A36 DC              VEJ  (DC)                               ; Load CSI from AR-X to X-Reg
+0520   3A37 FD 2A           POP  U                                  ;
+0521   3A39 A7 7B 00        CPA  (RND_VAL)                          ; Random number buffer used for misc buffer
+0522   3A3C 83 03           BCS  BRANCH_3A41                        ;
+0523   3A3E AE 7B 00        STA  (RND_VAL)                          ; Random number buffer used for misc buffer
+0524   3A41             
+0525   3A41             BRANCH_3A41:
+0526   3A41 FD 8A           POP  A                                  ;
+0527   3A43 FD 0A           POP  X                                  ;
+0528   3A45 FB              SEC                                     ;  
+0529   3A46 00              SBC  XL                                 ;
+0530   3A47 BD FF           EAI  $FF                                ; A = A ^ n 
+0531   3A49 DD              INC  A                                  ;
+0532   3A4A DD              INC  A                                  ;
+0533   3A4B 28              STA  UH                                 ;
+0534   3A4C 04              LDA  XL                                 ;
+0535   3A4D AE 78 72        STA  (WAIT_CTR_H)                       ;
+0536   3A50 48 7B           LDI  XH,HB(STR_BUF)                     ; STR_BUF+1 High Byte
+0537   3A52 4A 10           LDI  XL,LB(STR_BUF)                     ; STR_BUF+1 LowByte
+0538   3A54 A5 7B 00        LDA  (RND_VAL)                          ; Random number buffer used for misc buffer
+0539   3A57 F9              REC                                     ;
+0540   3A58 FD CA           ADR  X                                  ;
+0541   3A5A 46              DEC  X                                  ;
+0542   3A5B FD 98           PSH  Y                                  ;
+0543   3A5D             
+0544   3A5D             BRANCH_3A5D:
+0545   3A5D FD 88           PSH  X                                  ;
+0546   3A5F 58 7B           LDI  YH,$7B                             ;
+0547   3A61 A5 78 72        LDA  (WAIT_CTR_H)                       ;
+0548   3A64 1A              STA  YL                                 ;
+0549   3A65             
+0550   3A65             BRANCH_3A65:
+0551   3A65 45              LIN  X                                  ;
+0552   3A66 17              CPA  (Y)                                ;
+0553   3A67 89 09           BZR  BRANCH_3A72                        ;
+0554   3A69 54              INC  Y                                  ;
+0555   3A6A 14              LDA  YL                                 ;
+0556   3A6B 26              CPA  UL                                 ;
+0557   3A6C 99 09           BZR  BRANCH_3A65                        ;
+0558   3A6E FD 0A           POP  X                                  ;
+0559   3A70 8E 09           BCH  BRANCH_3A7B                        ;
+0560   3A72             
+0561   3A72             BRANCH_3A72:
+0562   3A72 FD 0A           POP  X                                  ;
+0563   3A74 44              INC  X                                  ;
+0564   3A75 04              LDA  XL                                 ;
+0565   3A76 A6              CPA  UH                                 ;
+0566   3A77 99 1C           BZR  BRANCH_3A5D                        ;
+0567   3A79 4A 0F           LDI  XL,$0F                             ;
+0568   3A7B             
+0569   3A7B             BRANCH_3A7B:
+0570   3A7B FD 1A           POP  Y                                  ;
+0571   3A7D 04              LDA  XL                                 ;
+0572   3A7E FB              SEC                                     ;
+0573   3A7F B1 0F           SBI  A,$0F                              ;
+0574   3A81 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0575   3A84             
+0576   3A84             
+0577   3A84             
+0578   3A84             ;------------------------------------------------------------------------------
+0579   3A84             ; BASIC command - BEGIN (STACK, BEGIN, UNTIL) 
+0580   3A84             ;   STACK resets the stack to zero, mandatory at the beginning of the program, 
+0581   3A84             ;   otherwise the machine can be crashed.
+0582   3A84             ;   BEGIN: statement ... : UNTIL condition
+0583   3A84             ;   returns after the BEGIN as long as the condition is false or <>0
+0584   3A84             ; Example
+0585   3A84             ;   10 STACK
+0586   3A84             ;   20 BEGIN: A=A+1
+0587   3A84             ;   30 UNTIL A=10
+0588   3A84             ;------------------------------------------------------------------------------
+0589   3A84             BEGIN:
+0590   3A84 A5 3A D0        LDA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0591   3A87 B7 E5           CPI  A,$E5                              ;
+0592   3A89 89 03           BZR  BRANCH_3A8E                        ;
+0593   3A8B 68 0E           LDI  UH,$0E                             ;
+0594   3A8D E0              VEJ  (E0)                               ; Output error from UH
+0595   3A8E             
+0596   3A8E             BRANCH_3A8E:
+0597   3A8E 0A              STA  XL                                 ;
+0598   3A8F 48 3A           LDI  XH,$3A                             ;
+0599   3A91 94              LDA  YH                                 ;
+0600   3A92 41              SIN  X                                  ;
+0601   3A93 14              LDA  YL                                 ;
+0602   3A94 41              SIN  X                                  ;
+0603   3A95 04              LDA  XL                                 ;
+0604   3A96 AE 3A D0        STA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0605   3A99 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0606   3A9A             
+0607   3A9A             
+0608   3A9A             
+0609   3A9A             ;------------------------------------------------------------------------------
+0610   3A9A             ; BASIC command - STACK (STACK, BEGIN, UNTIL)   
+0611   3A9A             ;   STACK resets the stack to zero, mandatory at the beginning of the program, 
+0612   3A9A             ;   otherwise the machine can be crashed.
+0613   3A9A             ;   BEGIN: statement ... : UNTIL condition
+0614   3A9A             ;   returns after the BEGIN as long as the condition is false or <>0
+0615   3A9A             ; Example
+0616   3A9A             ;   10 STACK
+0617   3A9A             ;   20 BEGIN: A=A+1
+0618   3A9A             ;   30 UNTIL A=10
+0619   3A9A             ;------------------------------------------------------------------------------
+0620   3A9A             STACK: ; 3A9A
+0621   3A9A B5 D1           LDI  A,$D1                              ;
+0622   3A9C AE 3A D0        STA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0623   3A9F E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0624   3AA0             
+0625   3AA0             
+0626   3AA0             
+0627   3AA0             ;------------------------------------------------------------------------------
+0628   3AA0             ; BASIC command - UNTIL (STACK, BEGIN, UNTIL)   
+0629   3AA0             ;   STACK resets the stack to zero, mandatory at the beginning of the program, 
+0630   3AA0             ;   otherwise the machine can be crashed.
+0631   3AA0             ;   BEGIN: statement ... : UNTIL condition
+0632   3AA0             ;   returns after the BEGIN as long as the condition is false or <>0
+0633   3AA0             ; Example
+0634   3AA0             ;   10 STACK
+0635   3AA0             ;   20 BEGIN: A=A+1
+0636   3AA0             ;   30 UNTIL A=10
+0637   3AA0             ;------------------------------------------------------------------------------
+0638   3AA0             UNTIL: ; 3AA0
+0639   3AA0 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0639   3AA1             
+0639   3AA1             
+0640   3AA1 00                      ABRF(BRANCH_3AA2)               ; passes result to AR-X. Jump FWD (n) if error
+0641   3AA2             BRANCH_3AA2:
+0642   3AA2 D0              VEJ  (D0)           \\                  ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0642   3AA3             
+0642   3AA3             
+0643   3AA3 00                      ABYT($00)   \\                  ; If range exceeded: Branch fwd A2
+0643   3AA4             
+0643   3AA4             
+0644   3AA4 00                      ABRF(BRANCH_3AA5)               ;
+0645   3AA5             BRANCH_3AA5:
+0646   3AA5 FD C8           PSH  A                                  ; 
+0647   3AA7 A5 3A D0        LDA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0648   3AAA B7 D1           CPI  A,$D1                              ;
+0649   3AAC 89 05           BZR  BRANCH_3AB3                        ;
+0650   3AAE FD 8A           POP  A                                  ;
+0651   3AB0 68 02           LDI  UH,$02                             ;
+0652   3AB2 E0              VEJ  (E0)                               ; Output error from UH
+0653   3AB3             
+0654   3AB3             BRANCH_3AB3:
+0655   3AB3 FD 8A           POP  A                                  ;
+0656   3AB5 B7 00           CPI  A,$00                              ;
+0657   3AB7 89 0C           BZR  BRANCH_3AC5                        ;
+0658   3AB9 A5 3A D0        LDA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0659   3ABC DF              DEC  A                                  ;
+0660   3ABD 0A              STA  XL                                 ;
+0661   3ABE 48 3A           LDI  XH,$3A                             ;
+0662   3AC0 47              LDE  X                                  ;
+0663   3AC1 1A              STA  YL                                 ;
+0664   3AC2 05              LDA  (X)                                ;
+0665   3AC3 18              STA  YH                                 ;
+0666   3AC4 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0667   3AC5             
+0668   3AC5             BRANCH_3AC5:
+0669   3AC5 A5 3A D0        LDA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0670   3AC8 DF              DEC  A                                  ;
+0671   3AC9 DF              DEC  A                                  ;
+0672   3ACA AE 3A D0        STA  (BU_STACK + 2)                     ; BU_STACK is BEGIN/UNTIL Stack
+0673   3ACD E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0674   3ACE             
+0675   3ACE             BU_STACK: ; BU_STACK is BEGIN/UNTIL Stack
+0676   3ACE 00 00 D9 50     .BYTE  $00,$00,$D9,$50,$09,$50,$09,$42
+0676   3AD2 09 50 09 42 
+0677   3AD6 09 42 09 50     .BYTE  $09,$42,$09,$50,$0F,$50,$0F,$50
+0677   3ADA 0F 50 0F 50 
+0678   3ADE 0F 50 0F 50     .BYTE  $0F,$50,$0F,$50,$0F,$50,$0F,$3A
+0678   3AE2 0F 50 0F 3A 
+0679   3AE6             
+0680   3AE6             
+0681   3AE6             
+0682   3AE6             
+0683   3AE6             ;------------------------------------------------------------------------------
+0684   3AE6             ; BASIC command - CAP$, translates the lowercase of the string to uppercase.
+0685   3AE6             ; Example: 
+0686   3AE6             ;   10 PRINT CAP$ "lower case"
+0687   3AE6             ;------------------------------------------------------------------------------
+0688   3AE6             CAP_STR:
+0689   3AE6 DC              VEJ  (DC)                               ; Load CSI from AR-X. X-Reg = Address, UL = Length (and A?)
+0690   3AE7 FD 88           PSH  X                                  ; Save CSI address
+0691   3AE9 FD C8           PSH  A                                  ;  and length
+0692   3AEB             
+0693   3AEB             BRANCH_3AEB:
+0694   3AEB 05              LDA  (X)                                ; Load A w/character from string
+0695   3AEC B7 61           CPI  A,$61                              ; $61 = 'a'
+0696   3AEE 81 08           BCR  BRANCH_3AF8                        ; If A is less than char 'a' skip ahead
+0697   3AF0 B7 7B           CPI  A,$7B                              ; $7B = 'z' + 1
+0698   3AF2 83 04           BCS  BRANCH_3AF8                        ; If A > 'z' skip ahead
+0699   3AF4 F9              REC                                     ; Reset carry
+0700   3AF5 B1 1F           SBI  A,$1F                              ; Convert to upper case
+0701   3AF7 0E              STA  (X)                                ; Store back to same address
+0702   3AF8             
+0703   3AF8             BRANCH_3AF8:
+0704   3AF8 44              INC  X                                  ; INC to next address
+0705   3AF9 88 10           LOP  UL,BRANCH_3AEB                     ; loop back until who string done
+0706   3AFB FD 8A           POP  A                                  ; Get back original A
+0707   3AFD FD 0A           POP  X                                  ; GEt back starting address of string
+0708   3AFF BE DF A1        SJP  XREG2STRBUF                        ; Inserts string pointed to by X-Reg into string buffer. Jump if overflow.
+0709   3B02 00              SBC  XL                                 ; Call above loads X-Reg with old string buffer pointer, not sure what this does
+0710   3B03 68 00           LDI  UH,$00                             ;
+0711   3B05             
+0712   3B05             BRANCH_3905:
+0713   3B05 9A              RTN                                     ; Done, return
+0714   3B06             
+0715   3B06             
+0716   3B06             
+0717   3B06             ;------------------------------------------------------------------------------
+0718   3B06             ; BASIC command - IF_NUM (IF_NUM, ELSE_NUM, ENDIF_NUM)
+0719   3B06             ;   IF_NUM cd:instructions1:ENDIF_NUM
+0720   3B06             ;       if condition cd=TRUE<>0, execute 'instructions1'
+0721   3B06             ;
+0722   3B06             ;   IF_NUM cd:statements1:ELSE_NUM:statements2:ENDIF_NUM
+0723   3B06             ;       if condition cd=TRUE<>0, execute 'instructions1'
+0724   3B06             ;       if condition cd=FALSE=0, execute 'instructions2'
+0725   3B06             ;
+0726   3B06             ;   Example:
+0727   3B06             ;       10 INPUT "A=";A
+0728   3B06             ;       20 IF # A=5:PAUSE "5":ELSE #:PAUSE "NO"
+0729   3B06             ;       30 BEEP 1: ENDIF #
+0730   3B06             ;   The ENDIF # is mandatory at the end of each test.
+0731   3B06             ;------------------------------------------------------------------------------
+0732   3B06             IF_NUM: ; 3B06
+0733   3B06 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0733   3B07             
+0733   3B07             
+0734   3B07 00                      ABRF(BRANCH_3B08 )              ; passes result to AR-X. Jump FWD (n) if error
+0735   3B08             BRANCH_3B08:
+0736   3B08 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0736   3B09             
+0736   3B09             
+0737   3B09 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+0737   3B0A             
+0737   3B0A             
+0738   3B0A 00                      ABRF(BRANCH_3B0B)               ;
+0739   3B0B             
+0740   3B0B             BRANCH_3B0B:
+0741   3B0B AE 3A CF        STA  (BU_STACK + 1)                     ; BU_STACK is BEGIN/UNTIL Stack
+0742   3B0E B7 00           CPI  A,$00                              ;
+0743   3B10 89 03           BZR  BRANCH_3B15                        ;
+0744   3B12 BE 3B 47        SJP  BRANCH_3B47                        ;
+0745   3B15             
+0746   3B15             BRANCH_3B15:
+0747   3B15 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0748   3B16             
+0749   3B16             
+0750   3B16             
+0751   3B16             ;------------------------------------------------------------------------------
+0752   3B16             ; BASIC command - ELSE_NUM (IF_NUM, ELSE_NUM, ENDIF_NUM)
+0753   3B16             ;------------------------------------------------------------------------------
+0754   3B16             ELSE_NUM: ; 3B16
+0755   3B16 A5 3A CF        LDA  (BU_STACK + 1)                     ; BU_STACK is BEGIN/UNTIL Stack
+0756   3B19 B7 00           CPI  A,$00                              ;
+0757   3B1B 8B 03           BZS  ENDIF_NUM                          ;
+0758   3B1D BE 3B 47        SJP  BRANCH_3B47                        ;
+0759   3B20             
+0760   3B20             
+0761   3B20             
+0762   3B20             ;------------------------------------------------------------------------------
+0763   3B20             ; BASIC command - ENDIF_NUM (IF_NUM, ELSE_NUM, ENDIF_NUM)
+0764   3B20             ;------------------------------------------------------------------------------
+0765   3B20             ENDIF_NUM:
+0766   3B20 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0767   3B21             
+0768   3B21             
+0769   3B21             
+0770   3B21             ;------------------------------------------------------------------------------
+0771   3B21             ; BASIC command - TEST (TEST, TRUE, FALSE)
+0772   3B21             ; TEST picks up a logical value.
+0773   3B21             ;   TEST A$="YES". This value is also stored during an IF # .
+0774   3B21             ;   TRUE and FALSE returns 1 or 0 depending on the truth table:
+0775   3B21             ; Example:
+0776   3B21             ;   10 A$="YES"
+0777   3B21             ;   20 TEST A$="YES"
+0778   3B21             ;   30 PRINT TRUE
+0779   3B21             ;
+0780   3B21             ;   Output -> 1
+0781   3B21             ;------------------------------------------------------------------------------
+0782   3B21             TEST_C: ; 3B21
+0783   3B21 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0783   3B22             
+0783   3B22             
+0784   3B22 00                      ABRF(BRANCH_3B23)               ; passes result to AR-X. Jump FWD (n) if error
+0785   3B23             
+0786   3B23             BRANCH_3B23:
+0787   3B23 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0787   3B24             
+0787   3B24             
+0788   3B24 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+0788   3B25             
+0788   3B25             
+0789   3B25 00                      ABRF(BRANCH_3B26)               ;
+0790   3B26             
+0791   3B26             BRANCH_3B26:                                                            
+0792   3B26 AE 3A CF        STA  (BU_STACK + 1)                     ; BU_STACK is BEGIN/UNTIL Stack
+0793   3B29 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+0794   3B2A             
+0795   3B2A             
+0796   3B2A             
+0797   3B2A             ;------------------------------------------------------------------------------
+0798   3B2A             ; BASIC command - TRUE (TEST, TRUE, FALSE)
+0799   3B2A             ;------------------------------------------------------------------------------
+0800   3B2A             TRUE: ; 3B2A
+0801   3B2A A5 3A CF        LDA  (BU_STACK + 1)                     ; BU_STACK is BEGIN/UNTIL Stack
+0802   3B2D B7 00           CPI  A,$00                              ;
+0803   3B2F 8B 02           BZS  BRANCH_3B33                        ;
+0804   3B31 B5 01           LDI  A,$01                              ;
+0805   3B33             
+0806   3B33             BRANCH_3B33:
+0807   3B33 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0808   3B36             
+0809   3B36             
+0810   3B36             
+0811   3B36             ;------------------------------------------------------------------------------
+0812   3B36             ; BASIC command - FALSE (TEST, TRUE, FALSE)
+0813   3B36             ;------------------------------------------------------------------------------
+0814   3B36             FALSE: ; 3B36
+0815   3B36 A5 3A CF        LDA  (BU_STACK + 1)                     ; BU_STACK is BEGIN/UNTIL Stack
+0816   3B39 B7 00           CPI  A,$00                              ;
+0817   3B3B 89 05           BZR  BRANCH_3B42                        ;
+0818   3B3D B5 01           LDI  A,$01                              ;
+0819   3B3F BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0820   3B42             
+0821   3B42             BRANCH_3B42:
+0822   3B42 B5 00           LDI  A,$00                              ;
+0823   3B44 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0824   3B47             
+0825   3B47             BRANCH_3B47:
+0826   3B47 55              LIN  Y                                  ;
+0827   3B48 B7 F0           CPI  A,$F0                              ;
+0828   3B4A 99 05           BZR  BRANCH_3B47                        ;
+0829   3B4C 55              LIN  Y                                  ;
+0830   3B4D B7 8D           CPI  A,$8D                              ;
+0831   3B4F 8B 04           BZS  BRANCH_3B55                        ;
+0832   3B51 B7 8E           CPI  A,$8E                              ;
+0833   3B53 99 0E           BZR  BRANCH_3B47                        ;
+0834   3B55             
+0835   3B55             BRANCH_3B55:
+0836   3B55 9A              RTN                                     ; Done, return
+0837   3B56             
+0838   3B56             
+0839   3B56             
+0840   3B56             ;------------------------------------------------------------------------------
+0841   3B56             ; BASIC command - ERN last error number.
+0842   3B56             ;   Example:
+0843   3B56             ;       10 ON ERROR GO TO 100
+0844   3B56             ;       20 A=1/0+10:BEEP 1
+0845   3B56             ;       30 END
+0846   3B56             ;       100 PRINT ERL, ERN
+0847   3B56             ;------------------------------------------------------------------------------
+0848   3B56             ERN: ; 3B36
+0849   3B56 A5 78 9B        LDA  (ERL)                              ; Error code
+0850   3B59 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0851   3B5C             
+0852   3B5C             
+0853   3B5C             
+0854   3B5C             ;------------------------------------------------------------------------------
+0855   3B5C             ; BASIC command - ERL last error line
+0856   3B5C             ;   Example:
+0857   3B5C             ;       10 ON ERROR GO TO 100
+0858   3B5C             ;       20 A=1/0+10:BEEP 1
+0859   3B5C             ;       30 END
+0860   3B5C             ;       100 PRINT ERL, ERN
+0861   3B5C             ;------------------------------------------------------------------------------
+0862   3B5C             ERL_C: ; 3B5C
+0863   3B5C A5 78 B4        LDA  (ERR_LINE_H)                       ;
+0864   3B5F 28              STA  UH                                 ;
+0865   3B60 A5 78 B5        LDA  (ERR_LINE_L)                       ;
+0866   3B63 2A              STA  UL                                 ;
+0867   3B64 BA DA 6C        JMP  BCMD_MEM + 15                      ; Jumps into middle of Basic command MEM
+0868   3B67             
+0869   3B67             
+0870   3B67             
+0871   3B67             ;------------------------------------------------------------------------------
+0872   3B67             ; BASIC command - LOW and HIGH
+0873   3B67             ; Returns Low or High order of integer, $0000 to $FFFF
+0874   3B67             ; Arguments: X-REG=Address BASIC Table pointed to. Y-REG Token
+0875   3B67             ; Example:
+0876   3B67             ;  10 PRINT HIGH &FFAA (prints 255)
+0877   3B67             ;  20 PRINT LOW $FFAA (prints 170)
+0878   3B67             ;------------------------------------------------------------------------------
+0879   3B67             LOW_HIGH: ; 3B67
+0880   3B67 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & save to U-Reg. A1 specifies the range. 
+0880   3B68             
+0880   3B68             
+0881   3B68 00                      ABYT($00) \\                    ; ***Fixed range, orig. $04
+0881   3B69             
+0881   3B69             
+0882   3B69 09                      ABRF(BRANCH_3B73)               ; If range exceeded: Branch fwd A2,
+0883   3B6A             
+0884   3B6A 5E 66           CPI  YL,$66                             ; $F066 - HIGH, $F065 - LOW
+0885   3B6C 89 02           BZR  BRANCH_3B70                        ; If != HIGH, skip ahead
+0886   3B6E A4              LDA  UH                                 ;
+0887   3B6F 2A              STA  UL                                 ;
+0888   3B70             
+0889   3B70             BRANCH_3B70:
+0890   3B70 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+0891   3B73             
+0892   3B73             BRANCH_3B73:
+0893   3B73 9A              RTN                                     ; Done, return
+0894   3B74             
+0895   3B74             
+0896   3B74             
+0897   3B74             ;------------------------------------------------------------------------------
+0898   3B74             ; BASIC command - MOKE 'multipoke'. MOKE address, integer, "HEXA"; "ALPHA"
+0899   3B74             ;   Example: MOKE &3800,41,&10,"011064";"PASCAL",10
+0900   3B74             ;------------------------------------------------------------------------------
+0901   3B74             MOKE: ; 3B74
+0902   3B74 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0902   3B75             
+0902   3B75             
+0903   3B75 4E                      ABRF(BRANCH_3BC4)               ; passes result to AR-X. Jump FWD (n) if error
+0904   3B76 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0904   3B77             
+0904   3B77             
+0905   3B77 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+0905   3B78             
+0905   3B78             
+0906   3B78 4E                      ABRF(BRANCH_3BC7)               ;
+0907   3B79 FD A8           PSH  U                                  ;
+0908   3B7B             
+0909   3B7B             BRANCH_3B7B:
+0910   3B7B C2              VEJ  (C2) \\                            ; If next character is not 2C ',' then branch fwd 29
+0910   3B7C             
+0910   3B7C             
+0911   3B7C 2C                      ACHR(COMMA) \\                  ;
+0911   3B7D             
+0911   3B7D             
+0912   3B7D 29                      ABRF(BRANCH_3BA7)               ;
+0913   3B7E DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0913   3B7F             
+0913   3B7F             
+0914   3B7F 44                      ABRF(BRANCH_3BC4)               ; passes result to AR-X. Jump FWD (n) if error
+0915   3B80             
+0916   3B80 FD 18           LDX  Y                                  ;
+0917   3B82 FD 1A           POP  Y                                  ;
+0918   3B84 FD 88           PSH  X                                  ;
+0919   3B86 A5 7A 04        LDA  (ARX + $04)                        ;
+0920   3B89 B7 C0           CPI  A,$C0                              ;
+0921   3B8B 81 14           BCR  BRANCH_3BA1                        ;
+0922   3B8D DC              VEJ  (DC)                               ; Load CSI from AR-X to X-Reg
+0923   3B8E             
+0924   3B8E             BRANCH_3B8E:
+0925   3B8E 6E 02           CPI  UL,$02                             ;
+0926   3B90 81 07           BCR  BRANCH_3B99                        ;
+0927   3B92 BE ED 95        SJP  ASCII2HEX                          ; Convert two ASCII characters from X-Reg into HEX
+0928   3B95 51              SIN  Y                                  ;
+0929   3B96 62              DEC  UL                                 ;
+0930   3B97 88 0B           LOP  UL,BRANCH_3B8E                     ;
+0931   3B99             
+0932   3B99             BRANCH_3B99:
+0933   3B99 FD 18           LDX  Y                                  ;
+0934   3B9B FD 1A           POP  Y                                  ;
+0935   3B9D FD 88           PSH  X                                  ;
+0936   3B9F 9E 26           BCH  BRANCH_3B7B                        ;
+0937   3BA1                 
+0938   3BA1             BRANCH_3BA1:    
+0939   3BA1 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0939   3BA2             
+0939   3BA2             
+0940   3BA2 08                      ABYT($08) \\                    ; If range exceeded: Branch fwd A2
+0940   3BA3             
+0940   3BA3             
+0941   3BA3 21                      ABRF(BRANCH_3BC5)               ;
+0942   3BA4 51              SIN  Y                                  ;
+0943   3BA5 9E 0E           BCH  BRANCH_3B99                        ;
+0944   3BA7             
+0945   3BA7             BRANCH_3BA7:
+0946   3BA7 C4              VEJ  (C4) \\                            ; Check tokens/char in U-Reg if not 3B ';' branch fwd 16
+0946   3BA8             
+0946   3BA8             
+0947   3BA8 3B                      ACHR(SEMI) \\                   ;
+0947   3BA9             
+0947   3BA9             
+0948   3BA9 16                      ABRF(BRANCH_3BC0)               ;
+0949   3BAA DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+0949   3BAB             
+0949   3BAB             
+0950   3BAB 18                      ABRF(BRANCH_3BC4)               ; passes result to AR-X. Jump FWD (n) if error
+0951   3BAC A5 7A 04        LDA  (ARX + $04)                        ;
+0952   3BAF B7 C0           CPI  A,$C0                              ;
+0953   3BB1 81 17           BCR  BRANCH_3BCA                        ;
+0954   3BB3 FD 18           LDX  Y                                  ;
+0955   3BB5 FD 1A           POP  Y                                  ;
+0956   3BB7 FD 88           PSH  X                                  ;
+0957   3BB9 DC              VEJ  (DC)                               ; Load CSI from AR-X to X-Reg
+0958   3BBA 62              DEC  UL                                 ;
+0959   3BBB BE D0 48        SJP  SYSMSG + 2                         ; Sends system messages
+0960   3BBE 9E 27           BCH  BRANCH_3B99                        ;
+0961   3BC0             
+0962   3BC0             BRANCH_3BC0:
+0963   3BC0 FD 0A           POP  X                                  ;
+0964   3BC2 CD 40           VMJ  $40                                ; Process command in U-Reg
+0965   3BC4             
+0966   3BC4             BRANCH_3BC4:
+0967   3BC4 E4              VEJ  (E4)                               ; Output Error 1 and return to the editor
+0968   3BC5             
+0969   3BC5             BRANCH_3BC5:
+0970   3BC5 FD 1A           POP  Y                                  ; 
+0971   3BC7             
+0972   3BC7             BRANCH_3BC7:
+0973   3BC7 68 13           LDI  UH,$13                             ;
+0974   3BC9 E0              VEJ  (E0)                               ; Output error from UH
+0975   3BCA             
+0976   3BCA             BRANCH_3BCA:
+0977   3BCA 68 11           LDI  UH,$11                             ;
+0978   3BCC E0              VEJ  (E0)                               ; Output error from UH
+0979   3BCD 00              SBC  XL                                 ; Orphan?
+0980   3BCE             
+0981   3BCE             
+0982   3BCE             
+0983   3BCE             ;------------------------------------------------------------------------------
+0984   3BCE             ; BASIC command - HEX$ n: returns a string, n in hexadecimal
+0985   3BCE             ; Example:
+0986   3BCE             ;  10 PRINT HEX$ 49152 (outputs C000)
+0987   3BCE             ;------------------------------------------------------------------------------
+0988   3BCE             HEX_STR:
+0989   3BCE D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+0989   3BCF             
+0989   3BCF             
+0990   3BCF 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+0990   3BD0             
+0990   3BD0             
+0991   3BD0 00                      ABRF(BRANCH_3BD1)               ;
+0992   3BD1             BRANCH_3BD1:
+0993   3BD1 48 70           LDI  XH,HB($70A0)                       ; 7600-77FF mirrored at 7000-71FF, 7200-73FF, 7400-75FF
+0994   3BD3 4A A0           LDI  XL,LB($70A0)                       ; So, $70A0 same as $76A0 which is in string variables
+0995   3BD5 A4              LDA  UH                                 ;
+0996   3BD6 BE 3C 48        SJP  SUB_3C48                           ;
+0997   3BD9 24              LDA  UL                                 ;
+0998   3BDA BE 3C 48        SJP  SUB_3C48                           ;
+0999   3BDD 4A A0           LDI  XL,$A0                             ;
+1000   3BDF B5 04           LDI  A,$04                              ;
+1001   3BE1             
+1002   3BE1             BRANCH_3BE1:
+1003   3BE1 BE DF A1        SJP  XREG2STRBUF                        ; Inserts string pointed to by X-Reg into string buffer.
+1004   3BE4 00              SBC  XL                                 ;
+1005   3BE5 68 00           LDI  UH,$00                             ;
+1006   3BE7 9A              RTN                                     ; Done, return
+1007   3BE8             
+1008   3BE8             
+1009   3BE8             
+1010   3BE8             ;------------------------------------------------------------------------------
+1011   3BE8             ; BASIC command - DUMP$ (A), or DUMP$ (A,n)
+1012   3BE8             ; Defaults to dumping 8 bytes, if n used it will dump n bytes
+1013   3BE8             ; Example:
+1014   3BE8             ;  DUMP$ (&3800)   (outputs 1001409660000100)
+1015   3BE8             ;  DUMP$ ($3800,2) (outputs 1001)
+1016   3BE8             ;------------------------------------------------------------------------------
+1017   3BE8             DUMP_STR:
+1018   3BE8 5A 08           LDI  YL,$08                             ; Default is 8 bytes
+1019   3BEA A5 78 8C        LDA  (NUMARGS)                          ; Number of function input arguments, array dim 1/2
+1020   3BED B7 02           CPI  A,$02                              ; 
+1021   3BEF 81 06           BCR  BRANCH_3BF7                        ; Branch fwd if < 2 arguments
+1022   3BF1 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1022   3BF2             
+1022   3BF2             
+1023   3BF2 0C                      ABYT($0C) \\                    ; If range exceeded: Branch fwd A2
+1023   3BF3             
+1023   3BF3             
+1024   3BF3 00                      ABRF(BRANCH_3BF4)               ; This is 2nd arg, i.e. # of bytes
+1025   3BF4             
+1026   3BF4             BRANCH_3BF4:
+1027   3BF4 1A              STA  YL                                 ; Store #args to YL
+1028   3BF5 CD 30           VMJ  $30                                ; Get AR-X from basic stack
+1029   3BF7             
+1030   3BF7             BRANCH_3BF7:
+1031   3BF7 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1031   3BF8             
+1031   3BF8             
+1032   3BF8 00                      ABYT($00) \\                    ; If range exceeded: Branch fwd A2
+1032   3BF9             
+1032   3BF9             
+1033   3BF9 00                      ABRF(BRANCH_3BFA)               ; This is address
+1034   3BFA             
+1035   3BFA             BRANCH_3BFA:
+1036   3BFA 14              LDA  YL                                 ; 
+1037   3BFB FD A8           PSH  U                                  ; 
+1038   3BFD FD 1A           POP  Y                                  ; 
+1039   3BFF 48 70           LDI  XH,HB($7080)                       ; 7600-77FF mirrored at 7000-71FF, 7200-73FF, 7400-75FF
+1040   3C01 4A 80           LDI  XL,LB($7080)                       ; So, $7080 is $7680 which is in string variable area
+1041   3C03 2A              STA  UL                                 ;
+1042   3C04 28              STA  UH                                 ;
+1043   3C05             
+1044   3C05             BRANCH_3C05:
+1045   3C05 BE 3C 47        SJP  SUB_3C47                           ;
+1046   3C08 88 05           LOP  UL,BRANCH_3C05                     ;
+1047   3C0A A4              LDA  UH                                 ;
+1048   3C0B D9              SHL                                     ;
+1049   3C0C 4A 80           LDI  XL,$80                             ;
+1050   3C0E 9E 2F           BCH  BRANCH_3BE1                        ; Copy pointed to by X-Reg to string buffer, returns. 
+1051   3C10             
+1052   3C10             
+1053   3C10             
+1054   3C10             ;------------------------------------------------------------------------------
+1055   3C10             ; BASIC command - HVAL "value", converts Hex string to int
+1056   3C10             ;  Example: HVAL "A192" (outputs 41362)
+1057   3C10             ;------------------------------------------------------------------------------
+1058   3C10             HVAL:
+1059   3C10 DC              VEJ  (DC)                               ; Load CSI from AR-X to X-Reg
+1060   3C11 68 00           LDI  UH,$00                             ;
+1061   3C13 6E 03           CPI  UL,$03                             ;
+1062   3C15 81 04           BCR  BRANCH_3C1B                        ;
+1063   3C17 BE ED 95        SJP  ASCII2HEX                          ; Convert two ASCII characters from X-Reg into HEX
+1064   3C1A 28              STA  UH                                 ;
+1065   3C1B             
+1066   3C1B             BRANCH_3C1B:
+1067   3C1B BE ED 95        SJP  ASCII2HEX                          ; Convert two ASCII characters from X-Reg into HEX
+1068   3C1E 2A              STA  UL                                 ;
+1069   3C1F BA DA 6C        JMP  BCMD_MEM + 15                      ; Jumps into middle of Basic command MEM
+1070   3C22             
+1071   3C22             
+1072   3C22             
+1073   3C22             ;------------------------------------------------------------------------------
+1074   3C22             ; BASIC command - STRING$: (n,a), returns n characters of ASCII code a.
+1075   3C22             ;   Exemple: A$=STRING$ (10,65), A$="AAAAAAAAAA".
+1076   3C22             ;------------------------------------------------------------------------------
+1077   3C22             STRING_STR:
+1078   3C22 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1078   3C23             
+1078   3C23             
+1079   3C23 08                      ABYT($08) \\                    ; If range exceeded: Branch fwd A2
+1079   3C24             
+1079   3C24             
+1080   3C24 00                      ABRF(BRANCH_3C25)               ;
+1081   3C25             
+1082   3C25             BRANCH_3C25:
+1083   3C25 FD C8           PSH  A                                  ;
+1084   3C27 CD 30           VMJ  $30                                ; Get AR-X from basic stack
+1085   3C29 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1085   3C2A             
+1085   3C2A             
+1086   3C2A 08                      ABYT($08) \\                    ; If range exceeded: Branch fwd A2
+1086   3C2B             
+1086   3C2B             
+1087   3C2B 00                      ABRF(BRANCH_3C2C)               ;
+1088   3C2C             
+1089   3C2C             BRANCH_3C2C:
+1090   3C2C AE 7B 00        STA  (RND_VAL)                          ; Random number buffer used for misc buffer
+1091   3C2F 24              LDA  UL                                 ;
+1092   3C30 48 70           LDI  XH,HB($7080)                       ; 7600-77FF mirrored at 7000-71FF, 7200-73FF, 7400-75FF
+1093   3C32 4A 80           LDI  XL,LB($7080)                       ; So, $7080 is $7680 which is in string variable area
+1094   3C34 FD 8A           POP  A                                  ;
+1095   3C36             
+1096   3C36             BRANCH_3C36:
+1097   3C36 41              SIN  X                                  ;
+1098   3C37 88 03           LOP  UL,BRANCH_3C36                     ;
+1099   3C39 48 70           LDI  XH,HB($7080)                       ; 7600-77FF mirrored at 7000-71FF, 7200-73FF, 7400-75
+1100   3C3B 4A 80           LDI  XL,LB($7080)                       ; So, $7080 is $7680 which is in string variable area
+1101   3C3D A5 7B 00        LDA  (RND_VAL)                          ; Random number buffer used for misc buffer
+1102   3C40 BE DF A1        SJP  XREG2STRBUF                        ; Copy string pointed to by X-Reg to string buffer.
+1103   3C43 00              SBC  XL                                 ;
+1104   3C44 68 00           LDI  UH,$00                             ;
+1105   3C46 9A              RTN                                     ; Done, return
+1106   3C47             
+1107   3C47             
+1108   3C47             
+1109   3C47             ;------------------------------------------------------------------------------
+1110   3C47             ; Helper function
+1111   3C47             ;
+1112   3C47             ;------------------------------------------------------------------------------
+1113   3C47             SUB_3C47: ; Used by DUMP$
+1114   3C47 55              LIN  Y                                  ;
+1115   3C48             
+1116   3C48             SUB_3C48: ; Used by HEX$
+1117   3C48 FD 98           PSH  Y                                  ;
+1118   3C4A 1A              STA  YL                                 ;
+1119   3C4B F1              AEX                                     ;
+1120   3C4C BE 3C 58        SJP  BRANCH_3C58                        ;
+1121   3C4F 41              SIN  X                                  ;
+1122   3C50 14              LDA  YL                                 ;
+1123   3C51 BE 3C 58        SJP  BRANCH_3C58                        ;
+1124   3C54 41              SIN  X                                  ;
+1125   3C55 FD 1A           POP  Y                                  ;
+1126   3C57 9A              RTN                                     ; Done, return
+1127   3C58             
+1128   3C58             BRANCH_3C58:
+1129   3C58 B9 0F           ANI  A,$0F                              ;
+1130   3C5A B7 0A           CPI  A,$0A                              ;
+1131   3C5C 83 03           BCS  BRANCH_3C61                        ;
+1132   3C5E B3 30           ADI  A,$30                              ;
+1133   3C60 9A              RTN                                     ; Done, return
+1134   3C61             
+1135   3C61             BRANCH_3C61:
+1136   3C61 B3 36           ADI  A,$36                              ;
+1137   3C63 9A              RTN                                     ; Done, return
+1138   3C64             
+1139   3C64             
+1140   3C64             ;------------------------------------------------------------------------------
+1141   3C64             ; BASIC command - RESUME, ignores an error.
+1142   3C64             ;   Example:
+1143   3C64             ;       10 ON ERROR GO TO 100
+1144   3C64             ;       20 A=1/0+10:BEEP 1
+1145   3C64             ;       30 END
+1146   3C64             ;       100 RESUME (resumes at BEEP 1)
+1147   3C64             ;   The error must not be at the end of a line.
+1148   3C64             ;------------------------------------------------------------------------------
+1149   3C64             RESUME:
+1150   3C64 CC              VEJ  (CC) \\                            ; Loads X-Reg with address at 78(B2) 78(B3) (Error Address)
+1150   3C65             
+1150   3C65             
+1151   3C65 B2                      ABYTL(ERR_ADD_H)                ;
+1152   3C66             
+1153   3C66             BRANCH_3C66:
+1154   3C66 45              LIN  X                                  ;
+1155   3C67 B7 3A           CPI  A,$3A                              ; ':'
+1156   3C69 8B 04           BZS  BRANCH_3C6F                        ;
+1157   3C6B B7 0D           CPI  A,$0D                              ; '/CR'
+1158   3C6D 99 09           BZR  BRANCH_3C66                        ;
+1159   3C6F             
+1160   3C6F             BRANCH_3C6F:
+1161   3C6F 46              DEC  X                                  ;
+1162   3C70 FD 5A           STX  Y                                  ;
+1163   3C72 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+1164   3C73             
+1165   3C73             
+1166   3C73             
+1167   3C73             ;------------------------------------------------------------------------------
+1168   3C73             ; BASIC command - INV video inversion of the whole screen.
+1169   3C73             ;  EXAMPLE: 
+1170   3C73             ;    10 WAIT 100: PRINT"SOME STUFF ON SCREEN"
+1171   3C73             ;    20 A$=INKEY$:IF A$ = "I" THEN GOTO 50
+1172   3C73             ;    30 IF A$ = "E" THEN END
+1173   3C73             ;    40 GOTO 20
+1174   3C73             ;    50 INV:BEEP 2:GOTO 20
+1175   3C73             ;    60 END
+1176   3C73             ;------------------------------------------------------------------------------
+1177   3C73             INV: ; 3C73
+1178   3C73 68 78           LDI  UH,$78                             ; LCD Mapping is $7600-$764D and $7700-$774D
+1179   3C75             
+1180   3C75             BRANCH_3C75:
+1181   3C75 6A 4D           LDI  UL,$4D                             ;
+1182   3C77 FD 62           DEC  UH                                 ; Initial $78 above DECd to $77
+1183   3C79             
+1184   3C79             BRANCH_3C79:
+1185   3C79 25              LDA  (U)                                ; Grab LCD buffer byte
+1186   3C7A BD FF           EAI  $FF                                ; Invert with XOR $FF
+1187   3C7C 2E              STA  (U)                                ; Save back to LCD buffer
+1188   3C7D 88 06           LOP  UL,BRANCH_3C79                     ; Loop back to get whole LB range
+1189   3C7F 6C 77           CPI  UH,$77                             ; Branch if UH >= $77 yo get &764x LCD buffer range
+1190   3C81 93 0E           BCS  BRANCH_3C75                        ;
+1191   3C83 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+1192   3C84             
+1193   3C84             
+1194   3C84             
+1195   3C84             ;------------------------------------------------------------------------------
+1196   3C84             ; BASIC command - PAGE switching of the 2 RESERVE mode pages.
+1197   3C84             ;------------------------------------------------------------------------------
+1198   3C84             PAGE: ; 3C84
+1199   3C84 68 3C           LDI  UH,HB(RES_I_2)                     ; Points to data below
+1200   3C86 6A 99           LDI  UL,LB(RES_I_2)                     ;
+1201   3C88 48 38           LDI  XH,HB(RES_I)                       ; Points to reserve memory area
+1202   3C8A 4A 08           LDI  XL,LB(RES_I)                       ; RES_I
+1203   3C8C             
+1204   3C8C             BRANCH_3C8C:
+1205   3C8C 05              LDA  (X)                                ; A = (X)
+1206   3C8D FD C8           PSH  A                                  ; Stash X 
+1207   3C8F 25              LDA  (U)                                ; A = (U)
+1208   3C90 41              SIN  X                                  ; (X) = A. Then X = X + 1
+1209   3C91 FD 8A           POP  A                                  ;
+1210   3C93 61              SIN  U                                  ; (U) = A. Then U = U + 1
+1211   3C94 4E C5           CPI  XL,$C5                             ; Loop back if XL != C5
+1212   3C96 99 0C           BZR  BRANCH_3C8C                        ;
+1213   3C98 E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+1214   3C99             
+1215   3C99             ; 3808 .RES_I    " DUM MOK HEX HVAL LOW HIG ":
+1216   3C99             
+1217   3C99             
+1218   3C99             ; 3C99 .RES_I    " IF  ELS END TES TRU FAL  ":
+1219   3C99             RES_I_2:
+1220   3C99 20 49 46 20     .TEXT  " IF  ELS"
+1220   3C9D 20 45 4C 53 
+1221   3CA1 20 45 4E 44     .TEXT  " END TES"
+1221   3CA5 20 54 45 53 
+1222   3CA9 20 54 52 55     .TEXT  " TRU FAL"
+1222   3CAD 20 46 41 4C 
+1223   3CB1 00 00           .BYTE  $00, $00
+1224   3CB3             
+1225   3CB3             ; 3CB3 .RES_II   " STA BEG UNT RES APO      ":
+1226   3CB3             RES_II_2:
+1227   3CB3 20 53 54 41     .TEXT  " STA BEG"
+1227   3CB7 20 42 45 47 
+1228   3CBB 20 55 4E 54     .TEXT  " UNT RES"
+1228   3CBF 20 52 45 53 
+1229   3CC3 20 41 50 4F     .TEXT  " APO"
+1230   3CC7 00 00 00 00     .BYTE  $00,$00,$00,$00,$00,$00
+1230   3CCB 00 00 
+1231   3CCD             
+1232   3CCD             ; 3CCD .RES_III  " DEL REN ERN ERL MOV REM  ":
+1233   3CCD             RES_III_2:
+1234   3CCD 20 44 45 4C     .TEXT  " DEL REN"
+1234   3CD1 20 52 45 4E 
+1235   3CD5 20 45 52 4E     .TEXT  " ERN ERL"
+1235   3CD9 20 45 52 4C 
+1236   3CDD 20 4D 4F 56     .TEXT  " MOV REM"
+1236   3CE1 20 52 45 4D 
+1237   3CE5 00 00           .BYTE  $00, $00
+1238   3CE7             
+1239   3CE7             RESREG_I.F1_2: ; 3CEA
+1240   3CE7 01 F0 8C        .BYTE   $01, $F0, $8C
+1241   3CEA             
+1242   3CEA             RESREG_I.F2_2: ; 3CEA
+1243   3CEA 02 F0 8D        .BYTE   $02, $F0, $8D
+1244   3CED             
+1245   3CED             RESREG_I.F3_2: ; 3CED
+1246   3CED 03 F0 8E        .BYTE   $03, $F0, $8E
+1247   3CF0             
+1248   3CF0             RESREG_I.F4_2: ; 3CF0
+1249   3CF0 04 F0 A0        .BYTE   $04, $F0, $A0
+1250   3CF3             
+1251   3CF3             RESREG_I.F5_ERN_2: ; 3CF3
+1252   3CF3 05 F0 52        .BYTE   $05, $F0, $52
+1253   3CF6             
+1254   3CF6             RESREG_I.F6_ERL_: ; 3CF6
+1255   3CF6 06 F0 53        .BYTE   $06, $F0, $53
+1256   3CF9             
+1257   3CF9             RESREG_II.F1_2: ; 3CF9
+1258   3CF9 11 F0 8A        .BYTE   $11, $F0, $8A
+1259   3CFC             
+1260   3CFC             RESREG_II.F2_2: ; 3CFC
+1261   3CFC 12 F0 87        .BYTE   $12, $F0, $87
+1262   3CFF             
+1263   3CFF             RESREG_II.F3_2: ; 3CFF
+1264   3CFF 13 F0 8B        .BYTE   $13, $F0, $8B
+1265   3D02             
+1266   3D02             RESREG_II.F4_2: ; 3D02
+1267   3D02 14 F0 A2        .BYTE   $14, $F0, $A2
+1268   3D05             
+1269   3D05             RESREG_III.F1_2: ; 3D05
+1270   3D05 09 F0 80        .BYTE   $09, $F0, $80
+1271   3D08             
+1272   3D08             RESREG_III.F2_2: ; 3D08
+1273   3D08 0A F0 82        .BYTE   $0A, $F0, $82
+1274   3D0B             
+1275   3D0B             RESREG_III.F3_2: ; 3D0B
+1276   3D0B 0B F0 54        .BYTE   $0B, $F0, $54
+1277   3D0E             
+1278   3D0E             RESREG_III.F4_2: ; 3D0E
+1279   3D0E 0C F0 55        .BYTE   $0C, $F0, $55
+1280   3D11             
+1281   3D11             RESREG_III.F5_2: ; 3D11
+1282   3D11 0D F0 A4        .BYTE   $0D, $F0, $A4
+1283   3D14             
+1284   3D14             RESREG_III.F6_2: ; 3D14
+1285   3D14 0E F0 A5        .BYTE   $0E, $F0, $A5
+1286   3D17             
+1287   3D17             RESREG_II.F5_2:; 3D17 CALL&E33F@: Autopower off 
+1288   3D17 15 F1 8A 26     .BYTE   $15,$F1,$8A,$26,$45,$33,$33,$46,$40
+1288   3D1B 45 33 33 46 
+1288   3D1F 40 
+1289   3D20 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+1289   3D24 00 00 00 00 
+1289   3D28 00 00 00 00 
+1289   3D2C 00 00 00 00 
+1290   3D30 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+1290   3D34 00 00 00 00 
+1290   3D38 00 00 00 00 
+1290   3D3C 00 00 00 00 
+1291   3D40 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00,$00,$00, $00,$00,$00,$00,$00,$00,$00,$00
+1291   3D44 00 00 00 00 
+1291   3D48 00 00 00 00 
+1291   3D4C 00 00 00 00 
+1292   3D50 00 00 00 00     .BYTE   $00,$00,$00,$00,$00,$00
+1292   3D54 00 00 
+1293   3D56             
+1294   3D56             
+1295   3D56             
+1296   3D56             
+1297   3D56             
+1298   3D56             ;------------------------------------------------------------------------------
+1299   3D56             ; BASIC command - NUMTBL
+1300   3D56             ; This seems to be for the CE-153 Soft Key Board
+1301   3D56             ;------------------------------------------------------------------------------
+1302   3D56             NUMTBL: ; 3D56
+1303   3D56 58 80           LDI  YH,$80                             ; Y = $800D
+1304   3D58 B5 FC           LDI  A,$FC                              ;
+1305   3D5A 5A 0D           LDI  YL,$0D                             ;
+1306   3D5C FD 1E           STA  #(Y)                               ; Some IO?
+1307   3D5E B5 00           LDI  A,$00                              ;
+1308   3D60 52              DEC  YL                                 ;
+1309   3D61 FD 1E           STA  #(Y)                               ;
+1310   3D63 5A 08           LDI  YL,$08                             ;
+1311   3D65 FD 1E           STA  #(Y)                               ;
+1312   3D67 FD AE 80 0F     STA  #($800F)                           ; Some sort of IO port
+1313   3D6B AE 77 F0        STA  (STRING_VARS + $1A0)               ;
+1314   3D6E 0A              STA  XL
+1315   3D6F             
+1316   3D6F             BRANCH_3D6F:
+1317   3D6F 94              LDA  YH                                 ;
+1318   3D70             
+1319   3D70             BRANCH_3D70:
+1320   3D70 FD 1E           STA  #(Y)                               ;
+1321   3D72 6A 03           LDI  UL,$03                             ;
+1322   3D74             
+1323   3D74             BRANCH_3D74:
+1324   3D74 88 02           LOP  UL,BRANCH_3D74                     ;
+1325   3D76 FD ED 80 0E     BII  #($800E),$FF                       ; Some sort of IO port
+1325   3D7A FF 
+1326   3D7B 89 15           BZR  BRANCH_3D92                        ;
+1327   3D7D FD ED 80 0F     BII  #($800F),$03                       ; Some sort of IO port
+1327   3D81 03 
+1328   3D82 89 0E           BZR  BRANCH_3D92                        ;
+1329   3D84 40              INC  XL                                 ;
+1330   3D85 D5              SHR                                     ;
+1331   3D86 91 18           BCR  BRANCH_3D70                        ;
+1332   3D88 FD 1E           STA  #(Y)                               ;
+1333   3D8A 4E 09           CPI  XL,$09                             ;
+1334   3D8C 83 22           BCS  BRANCH_3DB0                        ;
+1335   3D8E 5A 0F           LDI  YL,$0F                             ;
+1336   3D90 9E 23           BCH  BRANCH_3D6F                        ;
+1337   3D92             
+1338   3D92             BRANCH_3D92:
+1339   3D92 04              LDA  XL                                 ;
+1340   3D93 F1              AEX                                     ;
+1341   3D94 0A              STA  XL                                 ;
+1342   3D95 5A 0F           LDI  YL,$0F                             ;
+1343   3D97 FD 15           LDA  #(Y)                               ;
+1344   3D99 BF 02           BII  A,$02                              ;
+1345   3D9B 89 18           BZR  BRANCH_3DB5                        ;
+1346   3D9D 40              INC  XL                                 ;
+1347   3D9E BF 01           BII  A,$01                              ;
+1348   3DA0 89 13           BZR  BRANCH_3DB5                        ;
+1349   3DA2 40              INC  XL                                 ;
+1350   3DA3 52              DEC  YL                                 ;
+1351   3DA4 FD 15           LDA  #(Y)                               ;
+1352   3DA6 BF 80           BII  A,$80                              ;
+1353   3DA8 89 0B           BZR  BRANCH_3DB5                        ;
+1354   3DAA             
+1355   3DAA             BRANCH_3DAA:
+1356   3DAA 40              INC  XL                                 ;
+1357   3DAB D5              SHR                                     ;
+1358   3DAC 83 07           BCS  BRANCH_3DB5                        ;
+1359   3DAE 99 06           BZR  BRANCH_3DAA                        ;
+1360   3DB0             
+1361   3DB0             BRANCH_3DB0:
+1362   3DB0 FB              SEC                                     ;
+1363   3DB1 B5 FF           LDI  A,$FF                              ;
+1364   3DB3 8E 02           BCH  BRANCH_3DB7                        ;
+1365   3DB5             
+1366   3DB5             BRANCH_3DB5:
+1367   3DB5 04              LDA  XL                                 ;
+1368   3DB6 F1              AEX                                     ;
+1369   3DB7             
+1370   3DB7             BRANCH_3DB7:
+1371   3DB7 BA D9 E4        JMP  (BCMD_LEN + 13)                    ; Jumps into middle of Basic command LEN / ASC
+1372   3DBA             
+1373   3DBA             
+1374   3DBA             
+1375   3DBA             ;------------------------------------------------------------------------------
+1376   3DBA             ; BASIC command - MOVE (MOVE, REMOVE) 
+1377   3DBA             ;   allows you to merge programs with the possibility of modifying the 1st program.
+1378   3DBA             ;       MOVE
+1379   3DBA             ;       MERGE "2nd program"
+1380   3DBA             ;       REMOVE
+1381   3DBA             ;------------------------------------------------------------------------------
+1382   3DBA             MOVE: ; 3DBA
+1383   3DBA CC              VEJ  (CC) \\                            ; Loads X-Reg with address at 78(67) 78(68) (End of BASIC RAM)
+1383   3DBB             
+1383   3DBB             
+1384   3DBB 67                      ABYTL($7867)                    ;
+1385   3DBC 42              DEC  XL                                 ;
+1386   3DBD CA              VEJ  (CA) \\                            ; Transfers X to 78(67), 78(68) (End of BASIC RAM)
+1386   3DBE             
+1386   3DBE             
+1387   3DBE 67                      ABYTL($7867)                    ;
+1388   3DBF E2              VEJ  (E2)                               ; BASIC interpreter: Y-Reg points to command or line end
+1389   3DC0             
+1390   3DC0             
+1391   3DC0             
+1392   3DC0             ;------------------------------------------------------------------------------
+1393   3DC0             ; BASIC command - REMOVE (MOVE, REMOVE) 
+1394   3DC0             ;   allows you to merge programs with the possibility of modifying the 1st program.
+1395   3DC0             ;       MOVE
+1396   3DC0             ;       MERGE "2nd program"
+1397   3DC0             ;       REMOVE
+1398   3DC0             ;------------------------------------------------------------------------------
+1399   3DC0             REMOVE: ; 3DC0
+1400   3DC0 CC              VEJ  (CC) \\                            ; Loads X-Reg with address at 78(65) 78(66) (Start of BASIC prg in RAM)
+1400   3DC1             
+1400   3DC1             
+1401   3DC1 65                      ABYTL($7865)                    ;
+1402   3DC2 CA              VEJ  (CA) \\                            ; Transfers X to 78(69), 78(6A). (Start of BASIC prg EDIT)
+1402   3DC3             
+1402   3DC3             
+1403   3DC3 69                      ABYTL($7869)                    ;
+1404   3DC4 E2              VEJ  (E2)                               ; Return to BASIC interpreter: Y-Reg points to command or line end
+1405   3DC5             
+1406   3DC5             
+1407   3DC5             
+1408   3DC5             ;------------------------------------------------------------------------------
+1409   3DC5             ; PARSE_INT_INT
+1410   3DC5             ;   Parses aruments: COMMAND INT_A,INT_B
+1411   3DC5             ;   Saves INT_A, INT_B to (RND_VAL) and (RND_VAL + 1)
+1412   3DC5             ;------------------------------------------------------------------------------
+1413   3DC5             PARSE_INT_INT:
+1414   3DC5 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+1414   3DC6             
+1414   3DC6             
+1415   3DC6 14                      ABRF(BRANCH_3DDB)               ; passes result to AR-X. Jump FWD (n) if error
+1416   3DC7 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1416   3DC8             
+1416   3DC8             
+1417   3DC8 08                      ABYT($08) \\                    ; If range exceeded: Branch fwd A2
+1417   3DC9             
+1417   3DC9             
+1418   3DC9 11                      ABRF(BRANCH_3DDB)               ;
+1419   3DCA 24              LDA  UL                                 ;
+1420   3DCB AE 7B 00        STA  (RND_VAL)                          ; Random number buffer used for misc buffer
+1421   3DCE C2              VEJ  (C2) \\                            ; If next character is not 2C ',' then branch to return w/error
+1421   3DCF             
+1421   3DCF             
+1422   3DCF 2C                      ACHR(COMMA) \\                  ;
+1422   3DD0             
+1422   3DD0             
+1423   3DD0 0A                      ABRF(BRANCH_3DDB)               ;
+1424   3DD1 DE              VEJ  (DE) \\                            ; Calculates formula to which Y points,
+1424   3DD2             
+1424   3DD2             
+1425   3DD2 08                      ABRF(BRANCH_3DDB)               ; passes result to AR-X. Jump FWD (n) if error
+1426   3DD3 D0              VEJ  (D0) \\                            ; Convert AR-X to integer & load to U-Reg. A1 specifies the range. 
+1426   3DD4             
+1426   3DD4             
+1427   3DD4 08                      ABYT($08)                       ; If range exceeded: Branch fwd A2
+1428   3DD5 05                      ABRF(BRANCH_3DDB)               ;
+1429   3DD6 24              LDA  UL                                 ;
+1430   3DD7 AE 7B 01        STA  (RND_VAL + 1)                      ; Random number buffer used for misc buffer
+1431   3DDA 9A              RTN                                     ; Done, return
+1432   3DDB             
+1433   3DDB             BRANCH_3DDB:
+1434   3DDB E4              VEJ  (E4)                               ; Output ERROR 1 and return to editor
+1435   3DDC             
+1436   3DDC             
+1437   3DDC             
+1438   3DDC             ; Fill from current PC $ to $3FFF
+1439   3DDC 00 00 00 00 .FILL ($4000 - $),$00                       ; FILL from current PC to $4000 with $00
+1439   3DE0 00 00 00 00 
+1439   3DE4 00 00 00 00 
+1439   3DE8 00 00 00 00 
+1439   3DEC 00 00 00 00 
+1439   3DF0 00 00 00 00 
+1439   3DF4 00 00 00 00 
+1439   3DF8 00 00 00 00 
+1439   3DFC 00 00 00 00 
+1439   3E00 00 00 00 00 
+1439   3E04 00 00 00 00 
+1439   3E08 00 00 00 00 
+1439   3E0C 00 00 00 00 
+1439   3E10 00 00 00 00 
+1439   3E14 00 00 00 00 
+1439   3E18 00 00 00 00 
+1439   3E1C 00 00 00 00 
+1439   3E20 00 00 00 00 
+1439   3E24 00 00 00 00 
+1439   3E28 00 00 00 00 
+1439   3E2C 00 00 00 00 
+1439   3E30 00 00 00 00 
+1439   3E34 00 00 00 00 
+1439   3E38 00 00 00 00 
+1439   3E3C 00 00 00 00 
+1439   3E40 00 00 00 00 
+1439   3E44 00 00 00 00 
+1439   3E48 00 00 00 00 
+1439   3E4C 00 00 00 00 
+1439   3E50 00 00 00 00 
+1439   3E54 00 00 00 00 
+1439   3E58 00 00 00 00 
+1439   3E5C 00 00 00 00 
+1439   3E60 00 00 00 00 
+1439   3E64 00 00 00 00 
+1439   3E68 00 00 00 00 
+1439   3E6C 00 00 00 00 
+1439   3E70 00 00 00 00 
+1439   3E74 00 00 00 00 
+1439   3E78 00 00 00 00 
+1439   3E7C 00 00 00 00 
+1439   3E80 00 00 00 00 
+1439   3E84 00 00 00 00 
+1439   3E88 00 00 00 00 
+1439   3E8C 00 00 00 00 
+1439   3E90 00 00 00 00 
+1439   3E94 00 00 00 00 
+1439   3E98 00 00 00 00 
+1439   3E9C 00 00 00 00 
+1439   3EA0 00 00 00 00 
+1439   3EA4 00 00 00 00 
+1439   3EA8 00 00 00 00 
+1439   3EAC 00 00 00 00 
+1439   3EB0 00 00 00 00 
+1439   3EB4 00 00 00 00 
+1439   3EB8 00 00 00 00 
+1439   3EBC 00 00 00 00 
+1439   3EC0 00 00 00 00 
+1439   3EC4 00 00 00 00 
+1439   3EC8 00 00 00 00 
+1439   3ECC 00 00 00 00 
+1439   3ED0 00 00 00 00 
+1439   3ED4 00 00 00 00 
+1439   3ED8 00 00 00 00 
+1439   3EDC 00 00 00 00 
+1439   3EE0 00 00 00 00 
+1439   3EE4 00 00 00 00 
+1439   3EE8 00 00 00 00 
+1439   3EEC 00 00 00 00 
+1439   3EF0 00 00 00 00 
+1439   3EF4 00 00 00 00 
+1439   3EF8 00 00 00 00 
+1439   3EFC 00 00 00 00 
+1439   3F00 00 00 00 00 
+1439   3F04 00 00 00 00 
+1439   3F08 00 00 00 00 
+1439   3F0C 00 00 00 00 
+1439   3F10 00 00 00 00 
+1439   3F14 00 00 00 00 
+1439   3F18 00 00 00 00 
+1439   3F1C 00 00 00 00 
+1439   3F20 00 00 00 00 
+1439   3F24 00 00 00 00 
+1439   3F28 00 00 00 00 
+1439   3F2C 00 00 00 00 
+1439   3F30 00 00 00 00 
+1439   3F34 00 00 00 00 
+1439   3F38 00 00 00 00 
+1439   3F3C 00 00 00 00 
+1439   3F40 00 00 00 00 
+1439   3F44 00 00 00 00 
+1439   3F48 00 00 00 00 
+1439   3F4C 00 00 00 00 
+1439   3F50 00 00 00 00 
+1439   3F54 00 00 00 00 
+1439   3F58 00 00 00 00 
+1439   3F5C 00 00 00 00 
+1439   3F60 00 00 00 00 
+1439   3F64 00 00 00 00 
+1439   3F68 00 00 00 00 
+1439   3F6C 00 00 00 00 
+1439   3F70 00 00 00 00 
+1439   3F74 00 00 00 00 
+1439   3F78 00 00 00 00 
+1439   3F7C 00 00 00 00 
+1439   3F80 00 00 00 00 
+1439   3F84 00 00 00 00 
+1439   3F88 00 00 00 00 
+1439   3F8C 00 00 00 00 
+1439   3F90 00 00 00 00 
+1439   3F94 00 00 00 00 
+1439   3F98 00 00 00 00 
+1439   3F9C 00 00 00 00 
+1439   3FA0 00 00 00 00 
+1439   3FA4 00 00 00 00 
+1439   3FA8 00 00 00 00 
+1439   3FAC 00 00 00 00 
+1439   3FB0 00 00 00 00 
+1439   3FB4 00 00 00 00 
+1439   3FB8 00 00 00 00 
+1439   3FBC 00 00 00 00 
+1439   3FC0 00 00 00 00 
+1439   3FC4 00 00 00 00 
+1439   3FC8 00 00 00 00 
+1439   3FCC 00 00 00 00 
+1439   3FD0 00 00 00 00 
+1439   3FD4 00 00 00 00 
+1439   3FD8 00 00 00 00 
+1439   3FDC 00 00 00 00 
+1439   3FE0 00 00 00 00 
+1439   3FE4 00 00 00 00 
+1439   3FE8 00 00 00 00 
+1439   3FEC 00 00 00 00 
+1439   3FF0 00 00 00 00 
+1439   3FF4 00 00 00 00 
+1439   3FF8 00 00 00 00 
+1439   3FFC 00 00 00 00 
+1440   4000             
+1441   4000                 
+1442   4000             
+1443   4000             ;------------------------------------------------------------------------------
+1444   4000             ; BASIC1501 Keyword table 
+1445   4000             ;------------------------------------------------------------------------------
+1446   4000             .ORG    $4000
+1447   4000             
+1448   4000             BAS1501_TABLE: ; 4000
+1449   4000 55              .BYTE  $55
+1450   4001             
+1451   4001             TABLE_NUM: ; 4001
+1452   4001 00              .BYTE  $00
+1453   4002             
+1454   4002             NAME: ; 4002
+1455   4002                 ;.TEXT   "B15\r\r\r\r\r"
+1456   4002 42 31 35        .TEXT   "B15" \ .FILL $05,$0D            ; FILL (8 - NAME_LENGTH),$0D
+1456   4005 0D 0D 0D 0D 
+1456   4009 0D 
+1457   400A             
+1458   400A             INIT_VEC: ; 400A
+1459   400A 00 00 00        .BYTE  $00,$00,$00
+1460   400D             
+1461   400D             INPUT_NUM: ; 400D
+1462   400D 00 00 00        .BYTE  $00,$00,$00
+1463   4010             
+1464   4010             PRINT_NUM: ; 4010
+1465   4010 00 00 00        .BYTE  $00,$00,$00
+1466   4013             
+1467   4013             MISC_VEC: ; 4013
+1468   4013 9A 9A 9A 9A     .BYTE  $9A,$9A,$9A,$9A,$9A,$9A,$9A,$9A, $9A,$9A
+1468   4017 9A 9A 9A 9A 
+1468   401B 9A 9A 
+1469   401D             
+1470   401D             TRACE_VEC: ; 401D
+1471   401D C4 AF FF        .BYTE  $C4,$AF,$FF
+1472   4020             
+1473   4020             LETTER_A: ; 4020
+1474   4020 40 56           .WORD  LET_A    ; $4056
+1475   4022             
+1476   4022             LETTER_B: ; 4022
+1477   4022 40 5E           .WORD  LET_B    ; $405E
+1478   4024             
+1479   4024             LETTER_C: ; 4024
+1480   4024 40 68           .WORD  LET_C    ; $4068
+1481   4026             
+1482   4026             LETTER_D: ; 4026
+1483   4026 40 71           .WORD  LET_D    ; $4071
+1484   4028             
+1485   4028             LETTER_E: ; 4028
+1486   4028 40 8F           .WORD  LET_E    ; $408F
+1487   402A             
+1488   402A             LETTER_F: ; 402A
+1489   402A 40 B4           .WORD  LET_F    ; $40B4
+1490   402C             
+1491   402C             LETTER_G: ; 402C
+1492   402C 00 00           .WORD  $0000
+1493   402E             
+1494   402E             LETTER_H: ; 402E
+1495   402E 40 BE           .WORD  LET_H    ; $40BE
+1496   4030             
+1497   4030             LETTER_I: ; 4030
+1498   4030 40 D9           .WORD  LET_I    ; $40D9
+1499   4032             
+1500   4032             LETTER_J: ; 4032
+1501   4032 00 00           .WORD  $0000
+1502   4034             
+1503   4034             LETTER_K: ; 4034
+1504   4034 00 00           .WORD  $0000
+1505   4036             
+1506   4036             LETTER_L: ; 4036
+1507   4036 40 F3           .WORD  LET_L    ; $40F3
+1508   4038             
+1509   4038             LETTER_M: ; 4038
+1510   4038 40 FB           .WORD  LET_M    ; $40FB
+1511   403A             
+1512   403A             LETTER_N: ; 403A
+1513   403A 41 0D           .WORD  LET_N    ; $410D
+1514   403C             
+1515   403C             LETTER_O: ; 403C
+1516   403C 00 00           .WORD  $0000
+1517   403E             
+1518   403E             LETTER_P: ; 403E
+1519   403E 41 18           .WORD  LET_P    ; $4118
+1520   4040             
+1521   4040             LETTER_Q: ; 4040
+1522   4040 00 00           .WORD  $0000
+1523   4042             
+1524   4042             LETTER_R: ; 4042
+1525   4042 41 21           .WORD  LET_R    ; $4121
+1526   4044             
+1527   4044             LETTER_S: ; 4044
+1528   4044 41 4B           .WORD LET_S     ; $414B
+1529   4046             
+1530   4046             LETTER_T: ; 4046
+1531   4046 41 69           .WORD  LET_T    ; $4169
+1532   4048             
+1533   4048             LETTER_U: ; 4048
+1534   4048 41 7B           .WORD  LET_U    ; $417B
+1535   404A             
+1536   404A             LETTER_V: ; 404A
+1537   404A 00 00           .WORD  $0000
+1538   404C             
+1539   404C             LETTER_W: ; 404C
+1540   404C 00 00           .WORD  $0000
+1541   404E             
+1542   404E             LETTER_X: ; 404E
+1543   404E 00 00           .WORD  $0000
+1544   4050             
+1545   4050             LETTER_Y: ; 4050
+1546   4050 00 00           .WORD  $0000
+1547   4052             
+1548   4052             LETTER_Z: ; 4052
+1549   4052 00 00           .WORD  $0000
+1550   4054             
+1551   4054             
+1552   4054             ; Using a few tricks to help make creating the table easuer
+1553   4054             ; For first keyword of each letter a label is created which points to the second
+1554   4054             ; letter of its name. The PC-1500 uses this to search alphabetically.
+1555   4054             ; The CNIB macro is used to create the control byte that is between each keyword entry.
+1556   4054             ; The low nibble of first byte of keyword entry is the number of characters in name.
+1557   4054             ; The high nibble of byte following keyword entry is the control nibble for keyword.
+1558   4054             ; The macro is used like this: CN2:  EQU $F5 \ CNIB(CN1,CN2) 
+1559   4054             ; CN# is keyword's control byte. CNIB macro takes high nibble from previous keyword and
+1560   4054             ; low nibble from this keyword to create the approriate byte to proceed this keyword.
+1561   4054             B_TBL_4000_CMD_LST:
+1562   4054             ;                                        Token LB < 80 command is function, else is proceedure
+1563   4054             ;Ctrl nibble    Ctrl nib calc            Name               Token  Vector
+1564   4054             LET_A: EQU ($ + 2) ; First keyword starting with 'A'. LET_A = Address of 'S' in ASK
+1565   4054             CN1:  EQU $D3 \ CNIB($D3,CN1)   \ .TEXT "ASK"       \ .WORD $F060, ASK        ; $39F0, *OK
+1565   4054 D3          
+1565   4055 41 53 4B    
+1565   4058 F0 60 39 F0 
+1566   405C             
+1567   405C             LET_B: EQU ($ + 2) ; First keyword starting with 'B'. LET_B = Address of 'E' in BEGIN
+1568   405C             CN2:  EQU $F5 \ CNIB(CN1,CN2)   \ .TEXT "BEGIN"     \ .WORD $F087, BEGIN      ; $3A84, *OK
+1568   405C D5          
+1568   405D 42 45 47 49 
+1568   4061 4E 
+1568   4062 F0 87 3A 84 
+1569   4066             
+1570   4066             LET_C: EQU ($ + 2) ; First keyword starting with 'C'. LET_C = Address of 'A' in CAP$
+1571   4066             CN3:  EQU $94 \ CNIB(CN2,CN3)   \ .TEXT "CAP$"      \ .WORD $F062, CAP_STR    ; $3AE6, *OK
+1571   4066 F4          
+1571   4067 43 41 50 24 
+1571   406B F0 62 3A E6 
+1572   406F             
+1573   406F             LET_D: EQU ($ + 2) ; First keyword starting with 'D'. LET_D = Address of 'E' in DELETE
+1574   406F             CN4:  EQU $C6 \ CNIB(CN3,CN4)   \ .TEXT "DELETE"    \ .WORD $F080, DELETE     ; $38C5, *OK
+1574   406F 96          
+1574   4070 44 45 4C 45 
+1574   4074 54 45 
+1574   4076 F0 80 38 C5 
+1575   407A             CN5:  EQU $E4 \ CNIB(CN4,CN5)   \ .TEXT "DISP"      \ .WORD $F081, DISP       ; $3930, *OK
+1575   407A C4          
+1575   407B 44 49 53 50 
+1575   407F F0 81 39 30 
+1576   4083             CN6:  EQU $F5 \ CNIB(CN5,CN6)   \ .TEXT "DUMP$"     \ .WORD $F064, DUMP_STR   ; $3BE8, *OK
+1576   4083 E5          
+1576   4084 44 55 4D 50 
+1576   4088 24 
+1576   4089 F0 64 3B E8 
+1577   408D             
+1578   408D             LET_E: EQU ($ + 2) ; First keyword starting with 'E'. LET_E = Address of 'L' in ELSE#
+1579   408D             CN7:  EQU $A5 \ CNIB(CN6,CN7)   \ .TEXT "ELSE#"     \ .WORD $F08D, ELSE_NUM   ; $3B16, *OK
+1579   408D F5          
+1579   408E 45 4C 53 45 
+1579   4092 23 
+1579   4093 F0 8D 3B 16 
+1580   4097             CN8:  EQU $A6 \ CNIB(CN7,CN8)   \ .TEXT "ENDIF#"    \ .WORD $F08E, ENDIF_NUM  ; $3B20, *OK
+1580   4097 A6          
+1580   4098 45 4E 44 49 
+1580   409C 46 23 
+1580   409E F0 8E 3B 20 
+1581   40A2             CN9:  EQU $C3 \ CNIB(CN8,CN9)   \ .TEXT "ERL"       \ .WORD $F055, ERL_C      ; $3B5C, *OK
+1581   40A2 A3          
+1581   40A3 45 52 4C    
+1581   40A6 F0 55 3B 5C 
+1582   40AA             CN10: EQU $D3 \ CNIB(CN9,CN10)  \ .TEXT "ERN"       \ .WORD $F054, ERN        ; $3B56, *OK
+1582   40AA C3          
+1582   40AB 45 52 4E    
+1582   40AE F0 54 3B 56 
+1583   40B2             
+1584   40B2             LET_F: EQU ($ + 2) ; First keyword starting with 'F'. LET_F = Address of 'A' in FALSE
+1585   40B2             CN11: EQU $D5 \ CNIB(CN10,CN11) \ .TEXT "FALSE"     \ .WORD $F053, FALSE      ; $3B36, *OK
+1585   40B2 D5          
+1585   40B3 46 41 4C 53 
+1585   40B7 45 
+1585   40B8 F0 53 3B 36 
+1586   40BC             
+1587   40BC             LET_H: EQU ($ + 2) ; First keyword starting with 'H'. LET_H = Address of 'E' in HEX$
+1588   40BC             CN12: EQU $E4 \ CNIB(CN11,CN12) \ .TEXT "HEX$"      \ .WORD $F063, HEX_STR    ; $3BCE, *OK
+1588   40BC D4          
+1588   40BD 48 45 58 24 
+1588   40C1 F0 63 3B CE 
+1589   40C5             CN13: EQU $C4 \ CNIB(CN12,CN13) \ .TEXT "HIGH"      \ .WORD $F066, LOW_HIGH   ; $3B67, *OK
+1589   40C5 E4          
+1589   40C6 48 49 47 48 
+1589   40CA F0 66 3B 67 
+1590   40CE             CN14: EQU $D4 \ CNIB(CN13,CN14) \ .TEXT "HVAL"      \ .WORD $F067, HVAL       ; $3C10, *OK
+1590   40CE C4          
+1590   40CF 48 56 41 4C 
+1590   40D3 F0 67 3C 10 
+1591   40D7             
+1592   40D7             LET_I: EQU ($ + 2) ; First keyword starting with 'I'. LET_I = Address of 'F' in IF
+1593   40D7             CN15: EQU $A3 \ CNIB(CN14,CN15) \ .TEXT "IF#"       \ .WORD $F08C, IF_NUM     ; $3B06, *OK
+1593   40D7 D3          
+1593   40D8 49 46 23    
+1593   40DB F0 8C 3B 06 
+1594   40DF             CN16: EQU $C5 \ CNIB(CN15,CN16) \ .TEXT "INSTR"     \ .WORD $F061, INSTR      ; $3A22, *OK
+1594   40DF A5          
+1594   40E0 49 4E 53 54 
+1594   40E4 52 
+1594   40E5 F0 61 3A 22 
+1595   40E9             CN17: EQU $B3 \ CNIB(CN16,CN17) \ .TEXT "INV"       \ .WORD $F0A3, INV        ; $3C73, *OK
+1595   40E9 C3          
+1595   40EA 49 4E 56    
+1595   40ED F0 A3 3C 73 
+1596   40F1             
+1597   40F1             LET_L: EQU ($ + 2) ; First keyword starting with 'L'. LET_L = Address of 'O' in LOW
+1598   40F1             CN18: EQU $D3 \ CNIB(CN17,CN18) \ .TEXT "LOW"       \ .WORD $F065, LOW_HIGH   ; $3B67, *OK
+1598   40F1 B3          
+1598   40F2 4C 4F 57    
+1598   40F5 F0 65 3B 67 
+1599   40F9             
+1600   40F9             LET_M: EQU ($ + 2) ; First keyword starting with 'M'. LET_LM = Address of 'O' in MOKE
+1601   40F9             CN19: EQU $C4 \ CNIB(CN18,CN19) \ .TEXT "MOKE"      \ .WORD $F0A1, MOKE       ; $3B74, *OK
+1601   40F9 D4          
+1601   40FA 4D 4F 4B 45 
+1601   40FE F0 A1 3B 74 
+1602   4102             CN20: EQU $84 \ CNIB(CN19,CN20) \ .TEXT "MOVE"      \ .WORD $F0A4, MOVE       ; $3DBA, 
+1602   4102 C4          
+1602   4103 4D 4F 56 45 
+1602   4107 F0 A4 3D BA 
+1603   410B             
+1604   410B             LET_N: EQU ($ + 2) ; First keyword starting with 'N'. LET_N = Address of 'U' in NUMTABLE
+1605   410B             CN21: EQU $D6 \ CNIB(CN20,CN21) \ .TEXT "NUMTBL"    \ .WORD $F056, NUMTBL     ; $3D56, *?? CE-153 reading?
+1605   410B 86          
+1605   410C 4E 55 4D 54 
+1605   4110 42 4C 
+1605   4112 F0 56 3D 56 
+1606   4116             
+1607   4116             LET_P: EQU ($ + 2) ; First keyword starting with 'P'. LET_P = Address of 'A' in PAGE
+1608   4116             CN22: EQU $D4 \ CNIB(CN21,CN22) \ .TEXT "PAGE"      \ .WORD $F090, PAGE       ; $3C84, *OK
+1608   4116 D4          
+1608   4117 50 41 47 45 
+1608   411B F0 90 3C 84 
+1609   411F             
+1610   411F             LET_R: EQU ($ + 2) ; First keyword starting with 'R'. LET_R = Address of 'E' in REMOVE
+1611   411F             CN23: EQU $86 \ CNIB(CN22,CN23) \ .TEXT "REMOVE"    \ .WORD $F0A5, REMOVE     ; $3DC0, 
+1611   411F D6          
+1611   4120 52 45 4D 4F 
+1611   4124 56 45 
+1611   4126 F0 A5 3D C0 
+1612   412A             CN24: EQU $C5 \ CNIB(CN23,CN24) \ .TEXT "RENUM"     \ .WORD $F082, RENUM      ; $396E, *OK. Does not change GOTO/GOSUB
+1612   412A 85          
+1612   412B 52 45 4E 55 
+1612   412F 4D 
+1612   4130 F0 82 39 6E 
+1613   4134             CN25: EQU $C5 \ CNIB(CN24,CN25) \ .TEXT "RESET"     \ .WORD $F086, RESET      ; $39CD, *OK
+1613   4134 C5          
+1613   4135 52 45 53 45 
+1613   4139 54 
+1613   413A F0 86 39 CD 
+1614   413E             CN26: EQU $B6 \ CNIB(CN25,CN26) \ .TEXT "RESUME"    \ .WORD $F0A2, RESUME     ; $3C64, *OK
+1614   413E C6          
+1614   413F 52 45 53 55 
+1614   4143 4D 45 
+1614   4145 F0 A2 3C 64 
+1615   4149             
+1616   4149             LET_S: EQU ($ + 2) ; First keyword starting with 'S'. LET_S = Address of 'E' in SET
+1617   4149             CN27: EQU $C3 \ CNIB(CN26,CN27) \ .TEXT "SET"       \ .WORD $F083, SET        ; $39AF, *OK
+1617   4149 B3          
+1617   414A 53 45 54    
+1617   414D F0 83 39 AF 
+1618   4151             CN28: EQU $A5 \ CNIB(CN27,CN28) \ .TEXT "STACK"     \ .WORD $F08A, STACK      ; $3A9A, *OK
+1618   4151 C5          
+1618   4152 53 54 41 43 
+1618   4156 4B 
+1618   4157 F0 8A 3A 9A 
+1619   415B             CN29: EQU $D7 \ CNIB(CN28,CN29) \ .TEXT "STRING$"   \ .WORD $F068, STRING_STR ; $3C22, *OK
+1619   415B A7          
+1619   415C 53 54 52 49 
+1619   4160 4E 47 24 
+1619   4163 F0 68 3C 22 
+1620   4167             
+1621   4167             LET_T: EQU ($ + 2) ; First keyword starting with 'T'. LET_T = Address of 'E' in TEST
+1622   4167             CN30: EQU $A4 \ CNIB(CN29,CN30) \ .TEXT "TEST"      \ .WORD $F0A0, TEST_C     ; $3B21, *OK
+1622   4167 D4          
+1622   4168 54 45 53 54 
+1622   416C F0 A0 3B 21 
+1623   4170             CN31: EQU $D4 \ CNIB(CN30,CN31) \ .TEXT "TRUE"      \ .WORD $F052, TRUE       ; $3B2A, *OK
+1623   4170 A4          
+1623   4171 54 52 55 45 
+1623   4175 F0 52 3B 2A 
+1624   4179             
+1625   4179             LET_U: EQU ($ + 2) ; First keyword starting with 'U'. LET_U = Address of 'N' in UNTIL
+1626   4179             CN32: EQU $B5 \ CNIB(CN31,CN32) \ .TEXT "UNTIL"     \ .WORD $F08B, UNTIL      ; $3AA0, *OK
+1626   4179 D5          
+1626   417A 55 4E 54 49 
+1626   417E 4C 
+1626   417F F0 8B 3A A0 
+1627   4183             CN33: EQU $B0 \ .BYTE CN33                                                    ; $x0, zero signifies end of table
+1627   4183 B0          
+1628   4184             
+1629   4184             B_TBL_4000_END:
+1630   4184             
+1631   4184             .END
+tasm: Number of errors = 0
